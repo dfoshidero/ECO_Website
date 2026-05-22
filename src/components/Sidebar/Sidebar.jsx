@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useLocation, Link } from "react-router-dom";
 import {
   FaLinkedin,
@@ -6,184 +6,136 @@ import {
   FaYoutube,
   FaExternalLinkAlt,
 } from "react-icons/fa";
-import CloseIcon from "@mui/icons-material/Close";
-import MenuIcon from "@mui/icons-material/Menu";
-import { ReactComponent as GitHubIcon } from "../../assets/images/github.svg";
+import {
+  HiHome,
+  HiLightBulb,
+  HiDocumentText,
+  HiTableCells,
+} from "react-icons/hi2";
+import { HiMenu } from "react-icons/hi";
+import { HiOutlineChevronDoubleLeft } from "react-icons/hi2";
+import { ThemeToggle } from "../ui";
+import { paperUrl } from "../../data/docs";
+import logo from "../../assets/images/logo-head-nbg.svg";
 import "./Sidebar.scss";
 
-const Sidebar = ({ isOpen, toggleSidebar, isOverlay }) => {
+const navItems = [
+  { path: "/", label: "Home", icon: HiHome },
+  { path: "/quickview", label: "Insight", icon: HiLightBulb },
+  { path: "/support", label: "Docs", icon: HiDocumentText },
+  { path: "/project", label: "Full View", icon: HiTableCells },
+];
+
+const Sidebar = ({ isOpen, isMobile, toggleSidebar, onNavigate }) => {
   const location = useLocation();
-  const [windowHeight, setWindowHeight] = useState(window.innerHeight);
+  const year = new Date().getFullYear();
 
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowHeight(window.innerHeight);
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
-
-  const isActive = (path) => {
-    return location.pathname === path ? "active" : "";
-  };
+  const isActive = (path) =>
+    path === "/"
+      ? location.pathname === "/"
+      : location.pathname.startsWith(path);
 
   return (
-    <div className="sidebar-wrapper">
-      <div>
-        <button
-          className={`open-sidebar-button ${isOpen ? "" : "visible"}`}
-          onClick={toggleSidebar}
-        >
-          <MenuIcon style={{ color: "#000", fontSize: "20px" }} />
-        </button>
-        <div
-          className={`sidebar ${isOpen ? "open" : "closed"} ${
-            isOverlay ? "overlay" : ""
-          }`}
-        >
-          <div className="sidebar-header">
-            <button className="close-sidebar-button" onClick={toggleSidebar}>
-              <CloseIcon style={{ color: "#000", fontSize: "20px" }} />
-            </button>
-          </div>
-          <div className="sidebar-icon">
-            <div className="logo-container">
-              <img
-                src="/assets/images/logo-full-grey-nbg.svg"
-                alt="Logo"
-                className="logo-image"
-              />
-            </div>
-          </div>
-          <div className="sidebar-nav">
-            <Link className={`sidebar-link ${isActive("/")}`} to="/">
-              ECO
-            </Link>
-            <Link
-              className={`sidebar-link ${isActive("/quickview")}`}
-              to="/quickview"
-            >
-              Insight
-            </Link>
-            <Link
-              className={`sidebar-link ${isActive("/support")}`}
-              to="/support"
-            >
-              More
-            </Link>
-            <Link
-              className={`sidebar-link ${isActive("/project")}`}
-              to="/project"
-            >
-              Full View
-            </Link>
-          </div>
+    <>
+      <button
+        type="button"
+        className={`sidebar-menu-btn ${!isOpen ? "visible" : ""}`}
+        onClick={toggleSidebar}
+        aria-label="Open menu"
+      >
+        <HiMenu />
+      </button>
 
-          <div className="sidebar-socials">
-            <ul className="social-icons">
-              <li className="icon-content">
-                <a
-                  href="https://www.linkedin.com/in/favourdo/"
-                  aria-label="LinkedIn"
-                  data-social="linkedin"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <FaLinkedin />
-                  <div className="tooltip">LinkedIn</div>
-                </a>
-                <div className="filled"></div>
-              </li>
-              <li className="icon-content">
-                <a
-                  href="https://github.com/dfoshidero"
-                  aria-label="GitHub"
-                  data-social="github"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <FaGithub />
-                  <div className="tooltip">GitHub</div>
-                </a>
-                <div className="filled"></div>
-              </li>
-              <li className="icon-content">
-                <a
-                  href="https://www.youtube.com/channel/UCo1pWemz1x8KK653FrgUKHw"
-                  aria-label="Youtube"
-                  data-social="youtube"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <FaYoutube />
-                  <div className="tooltip">YouTube</div>
-                </a>
-                <div className="filled"></div>
-              </li>
-            </ul>
+      <aside
+        className={`sidebar ${isOpen ? "open" : "closed"} ${
+          isMobile ? "mobile" : ""
+        }`}
+      >
+        <div className="sidebar__brand">
+          <img src={logo} alt="ECO" className="sidebar__logo" />
+          <div className="sidebar__brand-text">
+            <span className="sidebar__name">ECO</span>
+            <span className="sidebar__tagline">Carbon Observer</span>
           </div>
-
-          <div className="copyright">
-            © 2024 Daniel Favour Oshidero.
-            <br />
-            <a
-              href="https://www.dfvro.com"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              www.dfvro.com
-            </a>
-          </div>
-
-          {windowHeight > 600 && ( // Adjust this threshold as needed
-            <div className="sidebar-acknowledgements">
-              <div className="acknowledgements-section">
-                <h2>Acknowledgements</h2>
-                <div className="acknowledgement-single">
-                  <h3>Supervisors</h3>
-                  <ul>
-                    <li>Prof. David Coley</li>
-                    <li>Prof. Michael Tipping</li>
-                  </ul>
-                </div>
-                <div className="acknowledgement-single">
-                  <h3>Drawings</h3>
-                  <ul>
-                    <li>Priyesh Pandaravalapil</li>
-                    <li>Namida Narathasajan</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="sidebar-footer">
-            <a
-              href="https://github.com/dfoshidero/ECO-Insight"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="github-link"
-            >
-              <GitHubIcon style={{ marginRight: "8px", marginBottom: "3px" }} />
-              <span>
-                View Code Repository
-                <FaExternalLinkAlt
-                  style={{
-                    height: "0.9em",
-                    marginRight: "8px",
-                    marginBottom: "-1.5px",
-                  }}
-                />
-              </span>
-            </a>
-          </div>
+          <button
+            type="button"
+            className="sidebar__close"
+            onClick={toggleSidebar}
+            aria-label="Close menu"
+          >
+            <HiOutlineChevronDoubleLeft />
+          </button>
         </div>
-      </div>
-    </div>
+
+        <nav className="sidebar__nav">
+          {navItems.map(({ path, label, icon: Icon }) => (
+            <Link
+              key={path}
+              to={path}
+              className={`sidebar__link ${isActive(path) ? "active" : ""}`}
+              onClick={onNavigate}
+            >
+              <Icon className="sidebar__link-icon" />
+              <span>{label}</span>
+            </Link>
+          ))}
+        </nav>
+
+        <div className="sidebar__socials">
+          <a
+            href="https://www.linkedin.com/in/favourdo/"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="LinkedIn"
+          >
+            <FaLinkedin />
+          </a>
+          <a
+            href="https://github.com/dfoshidero"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="GitHub"
+          >
+            <FaGithub />
+          </a>
+          <a
+            href="https://www.youtube.com/channel/UCo1pWemz1x8KK653FrgUKHw"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="YouTube"
+          >
+            <FaYoutube />
+          </a>
+        </div>
+
+        <div className="sidebar__footer">
+          <ThemeToggle />
+          <p className="sidebar__copyright">
+            © {year} Daniel Favour Oshidero
+            <br />
+            <a href="https://www.dfvro.com" target="_blank" rel="noreferrer">
+              dfvro.com
+            </a>
+          </p>
+          <a
+            href={paperUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="sidebar__paper"
+          >
+            Read the paper <FaExternalLinkAlt />
+          </a>
+          <a
+            href="https://github.com/dfoshidero/ECO-Insight"
+            target="_blank"
+            rel="noreferrer"
+            className="sidebar__repo"
+          >
+            View repository <FaExternalLinkAlt />
+          </a>
+        </div>
+      </aside>
+    </>
   );
 };
 

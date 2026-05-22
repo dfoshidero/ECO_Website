@@ -1,142 +1,133 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { extract, predict } from "../../utils/modelapi";
+import {
+  loadSession,
+  saveSession,
+  createSessionItem,
+  getGreeting,
+  countValidFields,
+  getFeatureChips,
+} from "../../utils/sessionHistory";
 import EcoAnimatedText from "../../components/AnimatedText/EcoAnimatedText";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronUp, faChevronDown } from "@fortawesome/free-solid-svg-icons";
+import { Button, Card } from "../../components/ui";
+import {
+  insightExampleInputs,
+  insightPlaceholders,
+} from "../../data/examples";
+import logo from "../../assets/images/logo-head-nbg.svg";
 import "./InsightPage.scss";
 
-const QuickView = () => {
+const getRandomExamples = (arr, num) => {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, num);
+};
+
+const Insight = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const autoRunDone = useRef(false);
+
   const [description, setDescription] = useState("");
   const [prediction, setPrediction] = useState(null);
-  const [greeting, setGreeting] = useState("");
+  const [extractedData, setExtractedData] = useState({});
+  const [lowConfidence, setLowConfidence] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [randomExamples, setRandomExamples] = useState([]);
-  const [tooltipMessage, setTooltipMessage] = useState("");
-  const [extractedData, setExtractedData] = useState({});
-  const [isInstructionsOpen, setIsInstructionsOpen] = useState(true);
+  const [error, setError] = useState("");
+  const [randomExamples, setRandomExamples] = useState(
+    () => getRandomExamples(insightExampleInputs, 3)
+  );
+  const [session, setSession] = useState(loadSession);
+  const [activeId, setActiveId] = useState(null);
 
-  const navigate = useNavigate();
-
-  const placeholders = [
-    "ECO loooves to help you predict your carbon! 🌱",
-    "What are you thinking of designing today?",
-    "Carbon carbon carbon...",
-    "Tell me about your cool eco-friendly idea! 🌟",
-    "Thinking sustainable? ECO's heeere to help! 🫡",
-    "Carbon time! 🚀",
-    "More detail = Moooore accuracy!"
-  ];
-
-  const tooltips = [
-    "I need a bit more info to give you a spot-on prediction!",
-    "More details will help me make a precise prediction! 😊",
-    "Add a touch more info for an accurate result!",
-    "Just add a bit more detail for the best prediction! 🧐",
-    "Your project needs a little more info for accuracy! 🌱",
-    "Share a bit more so I can give you a great prediction!",
-    "More details are needed to ensure a precise prediction! ✨",
-    "I need additional info to provide an accurate result!",
-    "Help me with a bit more info for a better prediction! 💪",
-    "Please provide a description so I can make a prediction! ✏️",
-  ];
+  const greeting = getGreeting();
 
   useEffect(() => {
-    const hours = new Date().getHours();
-    if (hours < 12) setGreeting("Good morning.");
-    else if (hours < 18) setGreeting("Good afternoon.");
-    else setGreeting("Good evening.");
-  }, []);
+    saveSession(session);
+  }, [session]);
 
-  const handlePredict = async () => {
-    setPrediction(null);
-    setTooltipMessage("");
-    setIsLoading(true);
-    try {
-      const trimmedDescription = String(description).trim();
-
-      if (!trimmedDescription) {
-        const randomTooltip =
-          "Please provide a description so I can make a prediction! ✏️";
-        setTooltipMessage(randomTooltip);
-        setIsLoading(false);
-        console.log("Tooltip message set:", randomTooltip);
-        return;
-      }
-
-      const extracted = await extract(trimmedDescription);
-      setExtractedData(extracted);
-      console.log(extracted);
-
-      const validFieldsCount = Object.values(extracted).filter(
-        (field) => field !== null && field !== "None"
-      ).length;
-
-      if (validFieldsCount < 3) {
-
-        const result = await predict(extracted);
-
-        if (result >= 120 && result <= 180) {
-          const randomTooltip =
-            tooltips[Math.floor(Math.random() * tooltips.length)];
-          setTooltipMessage(randomTooltip);
-          console.log("Tooltip message set:", randomTooltip);
-        }
-        else {
-          setPrediction(parseFloat(result[0]).toFixed(2));
-        }
-        
-      } else {
-        const result = await predict(extracted);
-        setPrediction(parseFloat(result[0]).toFixed(2));
-      }
-    } catch (error) {
-      console.error("Error in handlePredict:", error);
-    } finally {
-      setIsLoading(false);
+  const runPrediction = useCallback(async (text) => {
+    const trimmed = String(text).trim();
+    if (!trimmed) {
+      setError("Please enter a building description.");
+      return;
     }
-  };
 
-  const handleExampleClick = async (input) => {
-    setDescription(input);
+    setPrediction(null);
+    setError("");
+    setLowConfidence(false);
     setIsLoading(true);
-    setTooltipMessage("");
+
     try {
-      const extracted = await extract(input);
+      const extracted = await extract(trimmed);
       setExtractedData(extracted);
       const result = await predict(extracted);
-      setPrediction(parseFloat(result[0]).toFixed(2));
-    } catch (error) {
-      console.error("Error in handleExampleClick:", error);
+      const value = parseFloat(result[0]).toFixed(2);
+      setPrediction(value);
+
+      const validCount = countValidFields(extracted);
+      const isLow = validCount < 3;
+      setLowConfidence(isLow);
+
+      const item = createSessionItem({
+        description: trimmed,
+        prediction: value,
+        extractedData: extracted,
+        lowConfidence: isLow,
+      });
+      setSession((prev) => [item, ...prev].slice(0, 20));
+      setActiveId(item.id);
+    } catch (err) {
+      console.error("Prediction error:", err);
+      setError(
+        "Could not reach the prediction API. Check your connection and try again."
+      );
     } finally {
-      setDescription(input);
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const exampleInputs = [
-    "An office building with glulam beams",
-    "A triple-glazed curtain wall high-rise",
-    "A two-storey precast concrete store",
-    "A masonry residential complex with RCC substructure",
-    "A steel framed warehouse with an asphalt roof",
-    "A school with softwood frames and a sloped roof",
-    "A library with a green roof and SIPs panels",
-    "A clay block and concrete community center",
-    "A retail store with masonry bricks and ceramic tiles",
-    "A museum with glass panes and steel supports",
-  ];
+  useEffect(() => {
+    const { description: prefill, autoRun } = location.state || {};
+    if (prefill && !autoRunDone.current) {
+      setDescription(prefill);
+      if (autoRun) {
+        autoRunDone.current = true;
+        runPrediction(prefill);
+      }
+    }
+  }, [location.state, runPrediction]);
 
-  const getRandomExamples = (arr, num) => {
-    const shuffled = arr.sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, num);
+  const handlePredict = () => runPrediction(description);
+
+  const handleExampleClick = (input) => {
+    setDescription(input);
+    runPrediction(input);
   };
 
   const handleFocus = () => {
     setIsFocused(true);
-    setIsInstructionsOpen(false); // Close instructions when focused
-    setRandomExamples(getRandomExamples(exampleInputs, 3));
+    setRandomExamples(getRandomExamples(insightExampleInputs, 3));
+  };
+
+  const handleSessionSelect = (item) => {
+    setDescription(item.description);
+    setPrediction(item.prediction);
+    setExtractedData(item.extractedData);
+    setLowConfidence(item.lowConfidence);
+    setActiveId(item.id);
+    setError("");
+  };
+
+  const clearSession = () => {
+    setSession([]);
+    setActiveId(null);
+    sessionStorage.removeItem("eco-insight-session");
   };
 
   const handleDetails = () => {
@@ -149,140 +140,163 @@ const QuickView = () => {
     });
   };
 
+  const chips = getFeatureChips(extractedData);
+  const showPlaceholder = !isFocused && description === "";
+
   return (
-    <div className="quick-view">
-      <div className="content-wrapper">
-        <div className="insight-header">
-          <div className="greeting-wrapper">
-            <img
-              src="/assets/images/logo-head-nbg.svg"
-              alt="Logo"
-              className="logo"
-            />
-            <h1 className="greeting">{greeting}</h1>
-          </div>
-          <div className="insight-instructions">
-            <div className="instruction-title-wrapper">
-              <p className="instruction-title">Instructions</p>
-              <button
-                className="toggle-button"
-                onClick={() => setIsInstructionsOpen(!isInstructionsOpen)}
-              >
-                <FontAwesomeIcon
-                  icon={isInstructionsOpen ? faChevronUp : faChevronDown}
-                />
-              </button>
-            </div>
-            <div
-              className={`instruction-detail ${
-                isInstructionsOpen ? "open" : ""
-              }`}
-            >
-              ECO is not a chatbot, and will not engage in conversation with
-              you. It is a text to prediction pipeline.
-              <br />
-              <br />
-              ECO works by extracting building features that are found to
-              typically affect carbon. This includes materials, and building
-              specifications such as number of floors, GIA, etc.
-              <br />
-              <br />
-              ECO will not guess building features that have not been mentioned.
-              e.g. building foundations will not be assumed if your description
-              is “glass facade”.
-              <br />
-              <br />
-              Predictions are made based on feature combinations. There is no
-              further calculation.
-            </div>
-          </div>
+    <div className="insight">
+      <header className="insight__header">
+        <img src={logo} alt="" className="insight__logo" />
+        <div>
+          <h1 className="insight__greeting">{greeting}</h1>
+          <p className="insight__hint">
+            Describe a building — ECO extracts features and predicts embodied
+            carbon. Not a chatbot; each entry is an independent prediction.
+          </p>
         </div>
-        <div className="textarea-wrapper">
-          {!isFocused && description === "" && (
-            <EcoAnimatedText examples={placeholders} />
-          )}
-          <div className="description-container">
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              onFocus={handleFocus}
-              onBlur={() => setIsFocused(false)}
-              className="description-textarea"
-            />
-            {prediction && (
-              <div className="details-container">
-                <svg
-                  className="arrow"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M2 12L14 12L10 8L10 16L14 12Z" />
-                </svg>
-                <button onClick={handleDetails} className="details-button">
-                  See Details
-                </button>
+      </header>
+
+      <div className="insight__workspace">
+        <div className="insight__main">
+          <Card padding="md" className="insight__input-card">
+            <div className="insight__textarea-wrap">
+              {showPlaceholder && (
+                <EcoAnimatedText examples={insightPlaceholders} />
+              )}
+              <textarea
+                className="insight__textarea"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                onFocus={handleFocus}
+                onBlur={() => setIsFocused(false)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                    e.preventDefault();
+                    handlePredict();
+                  }
+                }}
+                rows={5}
+                aria-label="Building description"
+              />
+            </div>
+
+            {error && (
+              <div className="insight__error" role="alert">
+                {error}
               </div>
             )}
-          </div>
-        </div>
-        {isLoading ? (
-          <div className="jelly-triangle">
-            <div className="jelly-triangle__dot"></div>
-            <div className="jelly-triangle__traveler"></div>
-          </div>
-        ) : (
-          <button onClick={handlePredict} className="predict-button">
-            Predict
-          </button>
-        )}
-        {!isLoading && (prediction || tooltipMessage) && (
-          <div className="prediction-result">
-            <div className="dot"></div>
-            <pre>
-              {tooltipMessage || (
-                <>
-                  {prediction} kgCO2e/m<sup>2</sup>
-                </>
-              )}
-            </pre>
-          </div>
-        )}
 
-        <div className={`examples ${isFocused ? "show" : ""}`}>
-          <h4>Example Inputs:</h4>
-          <div className="example-list">
-            {randomExamples.map((input, index) => (
-              <div
-                key={index}
-                className="example-item"
-                onClick={() => handleExampleClick(input)}
+            <div className="insight__actions">
+              <Button
+                variant="primary"
+                size="md"
+                onClick={handlePredict}
+                disabled={isLoading}
               >
-                {input}
+                {isLoading ? "Predicting…" : "Predict carbon"}
+              </Button>
+              <span className="insight__shortcut">⌘/Ctrl + Enter</span>
+            </div>
+
+            {prediction && !isLoading && (
+              <div className="insight__result">
+                <div className="insight__result-value">
+                  <span className="insight__result-number">{prediction}</span>
+                  <span className="insight__result-unit">
+                    kgCO₂e/m<sup>2</sup>
+                  </span>
+                </div>
+                {lowConfidence && (
+                  <p className="insight__low-confidence">
+                    Low confidence — add more materials, structure, or dimensions
+                    for a sharper prediction.
+                  </p>
+                )}
+                {chips.length > 0 && (
+                  <div className="insight__chips">
+                    {chips.map(({ key, value }) => (
+                      <span key={key} className="insight__chip">
+                        {key}: {value}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <Button variant="secondary" size="sm" onClick={handleDetails}>
+                  See full details →
+                </Button>
               </div>
-            ))}
-          </div>
+            )}
+          </Card>
+
+          {description === "" && (
+            <div className="insight__examples">
+              <p className="insight__examples-label">Try an example</p>
+              <div className="insight__examples-list">
+                {randomExamples.map((input) => (
+                  <button
+                    key={input}
+                    type="button"
+                    className="insight__example-chip"
+                    onClick={() => handleExampleClick(input)}
+                  >
+                    {input}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
+
+        <section className="insight__rail insight__rail--horizontal">
+          <div className="insight__rail-header">
+            <h2>Session</h2>
+            {session.length > 0 && (
+              <button
+                type="button"
+                className="insight__clear"
+                onClick={clearSession}
+              >
+                Clear
+              </button>
+            )}
+            <Link to="/support" className="insight__rail-link">
+              How ECO works →
+            </Link>
+          </div>
+          {session.length === 0 ? (
+            <p className="insight__rail-empty">
+              Predictions from this session appear here.
+            </p>
+          ) : (
+            <ul className="insight__rail-list">
+              {session.map((item) => (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    className={`insight__rail-item ${
+                      activeId === item.id ? "active" : ""
+                    }`}
+                    onClick={() => handleSessionSelect(item)}
+                  >
+                    <span className="insight__rail-value">
+                      {item.prediction} kgCO₂e/m²
+                    </span>
+                    <span className="insight__rail-snippet">{item.snippet}</span>
+                    <time className="insight__rail-time">
+                      {new Date(item.timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </time>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
-      <svg width="0" height="0" className="jelly-maker">
-        <defs>
-          <filter id="uib-jelly-triangle-ooze">
-            <feGaussianBlur
-              in="SourceGraphic"
-              stdDeviation="7.3"
-              result="blur"
-            ></feGaussianBlur>
-            <feColorMatrix
-              in="blur"
-              mode="matrix"
-              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7"
-              result="ooze"
-            ></feColorMatrix>
-            <feBlend in="SourceGraphic" in2="ooze"></feBlend>
-          </filter>
-        </defs>
-      </svg>
     </div>
   );
 };
 
-export default QuickView;
+export default Insight;

@@ -2,97 +2,61 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "../Sidebar/Sidebar";
 import "./Layout.scss";
 
-const Layout = ({ children, pageTitle, additionalInfo }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [animateSidebar, setAnimateSidebar] = useState(false);
+const MOBILE_BREAKPOINT = 1024;
 
-  const minWidth = 1104; // Minimum width for the layout
-  const threshold = 500; // Close the sidebar 50px before the minWidth
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
-  const checkScreenWidth = () => {
-    if (window.innerWidth < minWidth + threshold) {
-      setIsSidebarOpen(false);
-    } else {
-      setIsSidebarOpen(true);
-    }
-  };
+const Layout = ({ children }) => {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(
+    () => window.innerWidth >= MOBILE_BREAKPOINT
+  );
+  const [isMobile, setIsMobile] = useState(
+    () => window.innerWidth < MOBILE_BREAKPOINT
+  );
 
   useEffect(() => {
-    const hasAnimated = sessionStorage.getItem("sidebarAnimated");
-
-    if (!hasAnimated) {
-      setAnimateSidebar(true);
-      sessionStorage.setItem("sidebarAnimated", "true");
-      setTimeout(() => {
+    const onResize = () => {
+      const mobile = window.innerWidth < MOBILE_BREAKPOINT;
+      setIsMobile(mobile);
+      if (!mobile) {
         setIsSidebarOpen(true);
-        setTimeout(() => {
-          setIsSidebarOpen(false);
-          setTimeout(() => {
-            setAnimateSidebar(false);
-          }, 1000); // Time for sidebar to fully close
-        }, 1000); // Time for sidebar to fully open
-      }, 1000); // Time to start the animation
-    } else {
-      checkScreenWidth(); // Check initial screen width
-    }
-
-    // Add event listener for window resize
-    window.addEventListener("resize", checkScreenWidth);
-
-    // Cleanup event listener on component unmount
-    return () => {
-      window.removeEventListener("resize", checkScreenWidth);
+      } else {
+        setIsSidebarOpen(false);
+      }
     };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const renderBackgroundImages = () => {
-    const images = [
-      {
-        src: require("../../assets/images/drawing1.png"),
-        className: "image1",
-      },
-      {
-        src: require("../../assets/images/drawing3.png"),
-        className: "image2",
-      },
-    ];
-
-    // Condition to decide whether to render background images
-    const shouldRenderImages = pageTitle === "Home";
-
-    if (shouldRenderImages) {
-      return images.map((image, index) => (
-        <img
-          key={index}
-          src={image.src}
-          alt={`background-${index}`}
-          className={`background-image ${image.className}`}
-        />
-      ));
-    }
-    return null; // Do not render images if the condition is not met
+  const toggleSidebar = () => setIsSidebarOpen((o) => !o);
+  const closeSidebar = () => {
+    if (isMobile) setIsSidebarOpen(false);
   };
 
   return (
     <div
-      className={`app ${isSidebarOpen ? "sidebar-open" : "sidebar-closed"} ${
-        animateSidebar ? "animate-sidebar" : ""
+      className={`app-layout ${isSidebarOpen ? "sidebar-open" : "sidebar-closed"} ${
+        isMobile ? "is-mobile" : ""
       }`}
     >
-      <Sidebar isOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
-
-      <div className="main-container">
-        <div className="content-container">
-          <div className="background">{renderBackgroundImages()}</div>
-          <div className="main-content">{children}</div>
-          <footer className="footer">
+      {isMobile && isSidebarOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={closeSidebar}
+          aria-hidden="true"
+        />
+      )}
+      <Sidebar
+        isOpen={isSidebarOpen}
+        isMobile={isMobile}
+        toggleSidebar={toggleSidebar}
+        onNavigate={closeSidebar}
+      />
+      <div className="app-layout__main">
+        <div className="app-layout__content">
+          <div className="app-layout__page">{children}</div>
+          <footer className="app-layout__footer">
             <small>
-              ECO still has a lot of kinks. Inspect project details for
-              accuracy.
+              ECO is a proof of concept — verify predictions in Full View before
+              critical decisions.
             </small>
           </footer>
         </div>

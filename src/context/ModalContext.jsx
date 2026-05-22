@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
+import "./ModalContext.scss";
 
 const ModalContext = createContext();
 
@@ -19,8 +20,19 @@ export const ModalProvider = ({ children }) => {
     >
       {children}
       {genericModalContent && (
-        <div className="modal-overlay">
-          <div className="modal-content">{genericModalContent}</div>
+        <div
+          className="modal-overlay"
+          onClick={closeGenericModal}
+          role="presentation"
+        >
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            {genericModalContent}
+          </div>
         </div>
       )}
     </ModalContext.Provider>

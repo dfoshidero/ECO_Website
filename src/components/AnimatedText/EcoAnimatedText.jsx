@@ -1,52 +1,33 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { TypeAnimation } from "react-type-animation";
-import styled from "styled-components";
+import "./EcoAnimatedText.scss";
 
-const Container = styled.div`
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  pointer-events: none;
-  color: #888;
-  opacity: 0.8;
-  font-size: 18px;
-
-  @media (min-width: 992px) and (min-height: 992px) {
-    font-size: 20px;
+const shuffle = (arr) => {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
   }
-
-  @media (min-width: 1200px) and (min-height: 1200px) {
-    font-size: 22px;
-  }
-`;
-
-// Function to shuffle an array
-const shuffleArray = (array) => {
-  return array.sort(() => Math.random() - 0.5);
+  return copy;
 };
 
 const EcoAnimatedText = ({ examples }) => {
-  // Shuffle examples array
-  const shuffledExamples = shuffleArray(examples);
-  const sequence = shuffledExamples.flatMap((text) => [
-    1000,
-    text,
-    5000,
-    "",
-    1000,
-  ]);
+  const sequence = useMemo(() => {
+    const shuffled = shuffle(examples);
+    return shuffled.flatMap((text) => [800, text, 4000, "", 600]);
+  }, [examples]);
 
   return (
-    <Container>
+    <div className="eco-animated-text" aria-hidden="true">
       <TypeAnimation
-        cursor={true}
+        cursor
         sequence={sequence}
-        wrapper="div"
+        wrapper="span"
         repeat={Infinity}
-        speed={65}
-        deletionSpeed={70}
+        speed={55}
+        deletionSpeed={60}
       />
-    </Container>
+    </div>
   );
 };
 

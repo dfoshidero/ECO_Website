@@ -1,50 +1,77 @@
 import React, { useState } from "react";
-import AnimatedText from "../components/AnimatedText/AnimatedText";
+import { Link, useNavigate } from "react-router-dom";
 import { FaArrowRight } from "react-icons/fa";
 import emailjs from "emailjs-com";
+import EcoAnimatedText from "../components/AnimatedText/EcoAnimatedText";
+import { Button, Card, Input, Textarea } from "../components/ui";
+import { homeExamples, insightExampleInputs } from "../data/examples";
+import { paperUrl } from "../data/docs";
 import "./HomePage.scss";
 
-const examples = [
+const steps = [
   {
-    text: 'A triple-glazed curtain wall facade with pile foundations and steel supports."',
-    carbon: "3102.74 kgCO2e/sq.m",
+    title: "Describe",
+    body: "Enter a natural-language description of your early-stage building concept.",
   },
   {
-    text: "A timber-framed house with a green roof and sheep's wool insulation.\"",
-    carbon: "230.43 kgCO2e/sq.m",
+    title: "Extract",
+    body: "ECO uses NLP to pull materials, structure, and dimensions from your text.",
   },
   {
-    text: 'A 15-storey high-rise with a reinforced concrete frame and masonry curtain wall, rising tall."',
-    carbon: "1528.82 kgCO2e/sq.m",
-  },
-  {
-    text: 'A prefabricated modular building with steel framing and SIP panels, for quick assembly."',
-    carbon: "2385.99 kgCO2e/sq.m",
-  },
-  {
-    text: 'A clay or mud building with thick masonry block walls, rooted in vernacular tradition."',
-    carbon: "496.61 kgCO2e/sq.m",
+    title: "Predict",
+    body: "A gradient-boosting model returns embodied carbon in kgCO₂e/m².",
   },
 ];
 
+const stats = [
+  { value: "150K", label: "Synthetic buildings" },
+  { value: "95%", label: "Regression accuracy" },
+  { value: "30+", label: "Material classes" },
+];
+
+const heroExamples = insightExampleInputs.slice(0, 3);
+const animatedExamples = homeExamples.map((e) => e.text);
+
 const HomePage = () => {
+  const navigate = useNavigate();
+  const [heroInput, setHeroInput] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     message: "",
   });
-
   const [emailSent, setEmailSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const goToInsight = (text) => {
+    const trimmed = String(text).trim();
+    if (trimmed) {
+      navigate("/quickview", {
+        state: { description: trimmed, autoRun: true },
+      });
+    } else {
+      navigate("/quickview");
+    }
+  };
+
+  const handleHeroKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      goToInsight(heroInput);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
 
     const templateParams = {
       name: formData.name,
@@ -59,104 +86,153 @@ const HomePage = () => {
         templateParams,
         process.env.REACT_APP_EMAILJS_USER_ID
       )
-      .then(
-        (response) => {
-          console.log("SUCCESS!", response.status, response.text);
-          setEmailSent(true);
-          setLoading(false);
-        },
-        (error) => {
-          console.log("FAILED...", error);
-          setLoading(false);
-          alert("Failed to send email.");
-        }
-      );
-
-    setFormData({
-      name: "",
-      email: "",
-      message: "",
-    });
+      .then(() => {
+        setEmailSent(true);
+        setFormData({ name: "", email: "", message: "" });
+      })
+      .catch(() => {
+        setError("Failed to send message. Please try again.");
+      })
+      .finally(() => setLoading(false));
   };
 
   return (
-    <div className="home-page">
-      <header className="header">
-        <h1 className="title">
-          HEY <span className="eco-text">ECO</span>
-          <img src="/assets/images/eco.svg" alt="Eco" className="eco-image" />I
-          AM DESIGNING...
+    <div className="home">
+      <section className="home-hero">
+        <p className="home-hero__eyebrow">Early-stage Carbon Observer</p>
+        <h1 className="home-hero__title">
+          Predict embodied carbon,
+          <br />
+          <span className="home-hero__accent">from a sentence.</span>
         </h1>
-        <div className="try-button-container">
-          <a className="try-button" href="/quickview">
-            TRY IT OUT <FaArrowRight className="enter-icon" />
-          </a>
+        <p className="home-hero__subtitle">
+          Machine learning for architects — translate design descriptions into
+          realistic carbon grounding at concept stage.
+        </p>
+
+        <div className="home-hero__input-wrap">
+          {!heroInput && !isFocused && (
+            <EcoAnimatedText examples={animatedExamples} />
+          )}
+          <textarea
+            className="home-hero__textarea"
+            value={heroInput}
+            onChange={(e) => setHeroInput(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            onKeyDown={handleHeroKeyDown}
+            placeholder=""
+            rows={3}
+            aria-label="Building description"
+          />
+          <button
+            type="button"
+            className="home-hero__submit"
+            onClick={() => goToInsight(heroInput)}
+            aria-label="Try ECO"
+          >
+            Try ECO <FaArrowRight />
+          </button>
         </div>
-      </header>
 
-      <div className="middle">
-        <section className="animated-text-container">
-          <AnimatedText examples={examples} />
-        </section>
-      </div>
+        <div className="home-hero__chips">
+          {heroExamples.map((ex) => (
+            <button
+              key={ex}
+              type="button"
+              className="home-hero__chip"
+              onClick={() => setHeroInput(ex)}
+            >
+              {ex}
+            </button>
+          ))}
+        </div>
 
-      <div className="description-contact">
-        <div className="project-description">
-          <h3>About</h3>
-          <p className="description-text">
-            ECO (Early-stage Carbon Observer) is a tool designed to
-            bridge the gap between early-stage architectural design and
-            sustainable outcomes. ECO is trained on 150,000 synthetically generated buildings,
-            covering a wide range of constructions and sizes,
-            and exists as an elegant means of providing realistic
-            carbon grounding to early design concepts. Using machine learning
-            and natural language feature extraction, ECO translates initial
-            design descriptions into predictions of embodied carbon footprints.
-            <br />
-            <br />
-            This tool provides architects and designers with immediate feedback
-            on the environmental implications of their design choices, promoting
-            iteration towards sustainable practices.
+        <p className="home-hero__secondary">
+          <Link to="/support">Read the project documentation</Link>
+        </p>
+      </section>
+
+      <section className="home-stats">
+        {stats.map(({ value, label }) => (
+          <Card key={label} padding="sm" className="home-stats__card">
+            <span className="home-stats__value">{value}</span>
+            <span className="home-stats__label">{label}</span>
+          </Card>
+        ))}
+      </section>
+
+      <section className="home-steps">
+        <h2 className="home-section-title">How it works</h2>
+        <div className="home-steps__grid">
+          {steps.map(({ title, body }, i) => (
+            <Card key={title} padding="sm" className="home-steps__card">
+              <span className="home-steps__num">{i + 1}</span>
+              <h3>{title}</h3>
+              <p>{body}</p>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      <section className="home-about">
+        <div className="home-about__text">
+          <h2 className="home-section-title">About ECO</h2>
+          <p>
+            ECO turns a one-line building description into an embodied carbon
+            estimate — so designers can compare concepts at the moment ideas
+            form, not weeks later.
+          </p>
+          <p className="home-about__links">
+            <Link to="/support">Read the v1 documentation</Link>
+            {" · "}
+            <a href={paperUrl} target="_blank" rel="noreferrer">
+              Read the paper
+            </a>
           </p>
         </div>
-        <div className="contact-form">
-          <h3>Collaborate!</h3>
+        <Card padding="md" className="home-about__form-card">
+          <h2 className="home-section-title">Collaborate</h2>
           {emailSent ? (
-            <p className="centered-message">
-              Your email was sent successfully.
+            <p className="home-about__success">
+              Thanks — your message was sent successfully.
             </p>
-          ) : loading ? (
-            <p className="centered-message">Loading...</p>
           ) : (
-            <form onSubmit={handleSubmit}>
-              <input
-                type="text"
+            <form onSubmit={handleSubmit} className="home-about__form">
+              <Input
+                label="Name"
                 name="name"
-                placeholder="Your Name"
                 value={formData.name}
                 onChange={handleChange}
                 required
+                placeholder="Your name"
               />
-              <input
-                type="email"
+              <Input
+                label="Email"
                 name="email"
-                placeholder="Your Email"
+                type="email"
                 value={formData.email}
                 onChange={handleChange}
                 required
+                placeholder="you@studio.com"
               />
-              <textarea
+              <Textarea
+                label="Message"
                 name="message"
-                placeholder="Your Message"
                 value={formData.message}
                 onChange={handleChange}
                 required
+                rows={4}
+                placeholder="Tell us about your project or feedback…"
               />
-              <button type="submit">Send</button>
+              {error && <p className="home-about__error">{error}</p>}
+              <Button type="submit" variant="primary" disabled={loading}>
+                {loading ? "Sending…" : "Send message"}
+              </Button>
             </form>
           )}
-        </div>
-      </div>
+        </Card>
+      </section>
     </div>
   );
 };

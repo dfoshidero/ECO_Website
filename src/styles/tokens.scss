@@ -1,0 +1,75 @@
+/* Design tokens — light (default) and dark themes */
+
+:root,
+[data-theme="light"] {
+  --bg: #fafaf9;
+  --bg-elevated: #ffffff;
+  --surface: #ffffff;
+  --surface-hover: #f5f5f4;
+  --border: #e7e5e4;
+  --border-subtle: #f5f5f4;
+  --text: #1c1917;
+  --text-muted: #57534e;
+  --text-subtle: #a8a29e;
+  --accent: #1f9d63;
+  --accent-hover: #178a55;
+  --accent-soft: rgba(31, 157, 99, 0.12);
+  --danger: #dc2626;
+  --danger-soft: rgba(220, 38, 38, 0.1);
+  --warning: #d97706;
+  --warning-soft: rgba(217, 119, 6, 0.1);
+
+  --font-display: "Space Grotesk", "Poppins", system-ui, sans-serif;
+  --font-sans: "Inter", "Poppins", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 24px;
+  --r-full: 9999px;
+
+  --shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.06);
+  --shadow-md: 0 2px 6px rgba(28, 25, 23, 0.06), 0 8px 24px rgba(28, 25, 23, 0.06);
+  --shadow-lg: 0 12px 32px rgba(28, 25, 23, 0.12);
+
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-7: 28px;
+  --s-8: 36px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 150ms;
+  --dur-base: 250ms;
+
+  --sidebar-width: 260px;
+  --header-height: 0px;
+  --content-max: 1280px;
+}
+
+[data-theme="dark"] {
+  --bg: #0c0a09;
+  --bg-elevated: #1c1917;
+  --surface: #1c1917;
+  --surface-hover: #292524;
+  --border: #292524;
+  --border-subtle: #1c1917;
+  --text: #fafaf9;
+  --text-muted: #a8a29e;
+  --text-subtle: #78716c;
+  --accent: #34d399;
+  --accent-hover: #6ee7b7;
+  --accent-soft: rgba(52, 211, 153, 0.15);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.15);
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.15);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+}

@@ -1,129 +1,66 @@
-.app {
+.app-layout {
   display: flex;
-  height: 100vh;
-  width: 100%;
-  overflow-y: auto;
-  background-color: #ffffff;
-  position: relative;
-}
+  min-height: 100vh;
+  background: var(--bg);
 
-.app.sidebar-open .main-container {
-  margin-left: 0px;
-  transition: margin-left 0.3s ease-in-out;
-}
-
-.app.sidebar-closed .main-container {
-  margin-left: -250px;
-  transition: margin-left 0.3s ease-in-out;
-}
-
-.app.sidebar-open .footer {
-  margin-left: 125px;
-  transition: margin-left 0.3s ease-in-out;
-}
-
-.app.sidebar-closed .footer {
-  margin-left: 12.5px;
-  transition: margin-left 0.3s ease-in-out;
-}
-
-.main-container {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  width: 100%;
-  padding-bottom: 5px;
-  padding-top: 35px;
-}
-
-.content-container {
-  height: 100%;
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  width: 80%;
-  max-width: 1200px;
-  min-width: 1096px;
-  margin: 0 auto;
-  z-index: 1;
-  position: relative; /* Ensure it's positioned for background images */
-}
-
-.background {
-  position: absolute;
-  z-index: 0;
-  height: 100%;
-  width: 100%;
-  pointer-events: none;
-
-  .image1 {
-    position: absolute;
-    top: -10%;
-    left: 50%;
-    width: 50%;
-    opacity: 0.3;
+  &__main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    width: 100%;
   }
 
-  .image2 {
-    position: absolute;
-    top: 40%; // Fixed position
-    left: 0%; // Fixed position
-    width: 50%;
-    opacity: 0.1;
-  }
+  &__content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: var(--s-5) var(--s-4);
+    padding-top: var(--s-6);
 
-  @media (min-width: 1200px) and (min-height: 1200px) {
-    .image1 {
-      position: absolute;
-      top: -2%;
-      left:50%;
-      width: 50%;
-      opacity: 0.3;
-    }
-
-    .image2 {
-      position: absolute;
-      top: 50%;
-      left: 30px;
-      width: 50%;
-      opacity: 0.1;
+    @media (max-width: 768px) {
+      padding: var(--s-4) var(--s-3);
+      padding-top: calc(var(--s-7) + 40px);
     }
   }
+
+  &__page {
+    flex: 1;
+    width: 100%;
+  }
+
+  &__footer {
+    margin-top: var(--s-5);
+    padding: var(--s-4) 0;
+    text-align: center;
+
+    small {
+      font-size: 12px;
+      color: var(--text-subtle);
+    }
+  }
+
+  &.is-mobile .app-layout__content {
+    max-width: 100%;
+  }
 }
 
-.main-content {
-  flex-grow: 1;
-  padding: 0 20px;
-  top: 0;
-  z-index: 1;
-}
-
-.footer {
+.sidebar-backdrop {
   position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
-  width: 100%;
-  padding: 10px 0;
-  z-index: 0;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 90;
+  animation: fade-in var(--dur-fast) var(--ease-out);
 }
 
-.footer small {
-  font-size: 12px;
-  color: #666;
-  font-weight: 100;
-}
-
-.app::-webkit-scrollbar {
-  width: 8px;
-}
-
-.app::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
-}
-
-.app::-webkit-scrollbar-track {
-  background: transparent;
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

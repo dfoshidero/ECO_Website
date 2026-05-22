@@ -1,109 +1,78 @@
-import React from "react";
-import { Card, CardContent, Typography } from "@mui/material";
-import "./SupportPage.scss"; // Ensure you create this CSS file or include styles directly
+import React, { useState } from "react";
+import { docsVersions } from "../../data/docs";
+import "./SupportPage.scss";
 
 const SupportPage = () => {
-  const sections = [
-    {
-      title: "Project Overview",
-      content: `ECO - an Early-stage Carbon Impact Observer for Intelligent Sustainability Forecasting in Buildings.<br><br>Developed by Daniel Favour O. Oshidero as part of an MSc in Computer Science at The University of Bath (2023/24). 
-                <br><br> 
-                ECO aims to close the gap in sustainable architectural integrations by introducing an intelligent model capable of translating early-stage design descriptions into precise estimates of material masses and embodied carbon footprints.`,
-      position: { gridColumn: "1 / span 2", gridRow: "1 / span 5" },
-    },
-    {
-      title: "Research Statement",
-      content: `The investigation and development of a machine learning (ML) model and end-user tool for the prediction of highly accurate carbon impact analyses from early outlines, with potential future integration into existing architectural design pipelines.`,
-      position: { gridColumn: "3 / span 4", gridRow: "1 / span 2" },
-    },
-    {
-      title: "Abstract",
-      content: `An increasing need for carbon awareness and sustainable architecture has prompted the development of tools that can predict and mitigate the environmental impact of new constructions from the earliest stages of design.
-                <br><br>
-                ECO is designed to integrate early-stage impact assessments into architectural processes, providing architects with immediate feedback on the carbon implications of their design choices, fostering more sustainable design practices from the outset.`,
-      position: { gridColumn: "3 / span 4", gridRow: "3 / span 3" },
-    },
-    {
-      title: "Expected Impact of Research",
-      content: `The integration of intelligent learning techniques with environmental impact assessment could significantly transform the conceptualisation stage of building design with respect to their carbon footprint.
-                <br><br>
-                By equipping designers with the ability to predict the carbon impact of their proposals early and accurately, this research allows them to make informed, proactive decisions.`,
-      position: { gridColumn: "5 / span 2", gridRow: "6 / span 4" },
-    },
-    {
-      title: "Potential Applications",
-      content: `- Existing building carbon audits with reduction recommendations.
-                <br><br>
-                - Real time carbon predictions in design meetings to enhance carbon awareness.
-                <br><br>
-                - Design optimisation capabilities through inverse predictions to find ideal parameters for carbon goals.
-                <br><br>
-                - Integration with operational energy systems for carbon offset forecasting. `,
-      position: { gridColumn: "5 / span 2", gridRow: "10 / span 4" },
-    },
-    {
-      title: "Tool Specifications",
-      content: `This tool utilizes a robust dataset of 150,000 synthetic datapoints generated from pre-existing carbon calculators. Synthetic data has been used as there currently exists too large of a gap in existing research and data to currently predict whole building carbon from that data. 
-                <br><br>
-                These calculators used to generate carbon impact employ carbon factors derived from the Inventory of Carbon and Energy (ICE) database and Environmental Product Declarations (EPDs).
-                <br><br>
-                The full pipeline is as follows:
-                <br><br>
-                <div style="text-align: center;">
-                Initial data entry in text form.
-                <br> &darr; <br>
-                Feature Extraction using NLP techniques, including SpaCy's en_core_web_trf model for Named Entity Recognition and the all-mpnet-base-v2 model from Sentence Transformers for semantic similarity.
-                <br> &darr; <br>
-                A Histogram-based Gradient Boosting (HistGradBoost) model processes the extracted features via regression.
-                <br> &darr; <br>
-                The model generates a final prediction based on the processed data.
-                <br><br>
-                </div>
-
-                The final step regression model is highly precise with an average accuracy of 95% across multiple tests.
-                <br><br>
-                You can download any material assumptions <a style="color: #39a265" href="assets/assumptions.xlsx">here</a>.
-                <br>
-                You can download any logical constraints <a style="color: #39a265" href="assets/constraints.xlsx">here</a>.`,
-
-      position: { gridColumn: "1 / span 4", gridRow: "6 / span 8" },
-    },
-    {
-      title: "Disclaimers",
-      content: `This tool is made as a Proof of Concept. It can be used by students, architects, and designers alike, but with caution. 
-      The estimates and assessments provided by ECO are intended only for preliminary analysis and should not be relied upon as the final source of information for critical decision-making. 
-      Users are encouraged to validate results with additional tools and professional expertise.
-      <br><br>
-      <div style="color: #39a265">Open issues:</div>
-      <br>
-      - Currently, the algorithm tends to favour larger buildings. Smaller buildings may be over-engineered. This can be resolved with longer descriptions.`,
-      position: { gridColumn: "1 / span 6", gridRow: "14 / span 2" },
-    },
-  ];
+  const [activeVersionId, setActiveVersionId] = useState(docsVersions[0].id);
+  const version =
+    docsVersions.find((v) => v.id === activeVersionId) || docsVersions[0];
 
   return (
-    <div className="about-page">
-      <div className="card-container">
-        {sections.map((section, index) => (
-          <Card
-            className="about-card"
-            style={{
-              gridColumn: section.position.gridColumn,
-              gridRow: section.position.gridRow,
-            }}
-            key={index}
+    <div className="docs">
+      <header className="docs__hero">
+        <p className="docs__eyebrow">Embodied carbon prediction toolkit</p>
+        <h1>Documentation</h1>
+        <p>
+          What ECO does, how it works, and where it&apos;s headed.
+        </p>
+        <dl className="docs__meta">
+          <div>
+            <dt>Stage</dt>
+            <dd>v1 · Early access</dd>
+          </div>
+          <div>
+            <dt>Built by</dt>
+            <dd>Daniel Favour O. Oshidero</dd>
+          </div>
+          <div>
+            <dt>Origin</dt>
+            <dd>Spun out of research at the University of Bath, 2024</dd>
+          </div>
+        </dl>
+      </header>
+
+      <div className="docs__version-tabs" role="tablist">
+        {docsVersions.map((v) => (
+          <button
+            key={v.id}
+            type="button"
+            role="tab"
+            aria-selected={activeVersionId === v.id}
+            className={`docs__version-tab ${
+              activeVersionId === v.id ? "active" : ""
+            }`}
+            onClick={() => setActiveVersionId(v.id)}
           >
-            <CardContent>
-              <Typography variant="h5" gutterBottom>
-                {section.title}
-              </Typography>
-              <Typography
-                variant="body1"
-                dangerouslySetInnerHTML={{ __html: section.content }}
-              />
-            </CardContent>
-          </Card>
+            {v.label}
+            {v.status === "current" && (
+              <span className="docs__version-badge">Current</span>
+            )}
+          </button>
         ))}
+      </div>
+
+      <div className="docs__version-intro">
+        <p>{version.summary}</p>
+        <span className="docs__released">Released {version.releasedAt}</span>
+      </div>
+
+      <div className="docs__layout">
+        <nav className="docs__nav" aria-label="Section navigation">
+          {version.sections.map(({ id, title }) => (
+            <a key={id} href={`#${id}`} className="docs__nav-link">
+              {title}
+            </a>
+          ))}
+        </nav>
+
+        <div className="docs__content">
+          {version.sections.map(({ id, title, content }) => (
+            <section key={id} id={id} className="docs__section">
+              <h2>{title}</h2>
+              <div className="docs__section-body">{content}</div>
+            </section>
+          ))}
+        </div>
       </div>
     </div>
   );

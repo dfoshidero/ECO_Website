@@ -1,13 +1,41 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { mapExtractedDataToOptions } from "../../utils/utils";
-import options from "../../data/options";
+import options from "../../data/options.json";
 import { extract, predict } from "../../utils/modelapi";
 import { useModal } from "../../context/ModalContext";
-import Loader from "../../components/LoaderOne/Loader";
+import { Button, Card, Tooltip } from "../../components/ui";
 import { saveAs } from "file-saver";
 import Papa from "papaparse";
+import { HiChevronDown } from "react-icons/hi2";
 import "./Project.scss";
+
+const sectionNames = {
+  substructure: "Sub-Structure Materials",
+  structure: "Structure Materials",
+  external: "External Materials",
+  internal: "Internal Materials",
+};
+
+const stripMaterial = (name) => name.replace(" Material", "");
+
+const CollapsibleSection = ({ title, defaultOpen = true, children }) => {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className={`project-section ${open ? "open" : ""}`}>
+      <button
+        type="button"
+        className="project-section__head"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+      >
+        <span>{title}</span>
+        <HiChevronDown className="project-section__chevron" />
+      </button>
+      {open && <div className="project-section__body">{children}</div>}
+    </div>
+  );
+};
 
 const Project = () => {
   const location = useLocation();
@@ -23,99 +51,26 @@ const Project = () => {
   const [description, setDescription] = useState(initialInput);
   const [prediction, setPrediction] = useState(initialPrediction);
   const [loading, setLoading] = useState(false);
-  const tooltipRef = useRef();
+
+  const sector = buildingData["Sector"];
 
   useEffect(() => {
-    const sector = buildingData["Sector"];
     if (sector === "Non-residential") {
-      setBuildingData((prevData) => ({
-        ...prevData,
-        "Sub-Sector": "Non-residential",
-      }));
+      setBuildingData((prev) => {
+        if (prev["Sub-Sector"] === "Non-residential") return prev;
+        return { ...prev, "Sub-Sector": "Non-residential" };
+      });
     }
-  }, [buildingData]);
-
-  const stripMaterial = (name) => name.replace(" Material", "");
+  }, [sector]);
 
   const mappedData = mapExtractedDataToOptions(buildingData, options);
 
-  const sectionNames = {
-    substructure: "Sub-Structure Materials",
-    structure: "Structure Materials",
-    external: "External Materials",
-    internal: "Internal Materials",
-    sectorInformation: "Sector",
-    numericalInformation: "General Building Info",
-  };
-
-  const handleDropdownChange = (category, subcategory, value) => {
-    const updatedData = {
-      ...buildingData,
-      [subcategory]: value,
-    };
-    setBuildingData(updatedData);
+  const handleDropdownChange = (_category, subcategory, value) => {
+    setBuildingData((prev) => ({ ...prev, [subcategory]: value }));
   };
 
   const handleInputChange = (option, value) => {
-    const updatedData = {
-      ...buildingData,
-      [option]: value,
-    };
-    setBuildingData(updatedData);
-  };
-
-  const handleRecalculate = async () => {
-    if (
-      JSON.stringify(buildingData) !== JSON.stringify(initialExtractedData) &&
-      Object.keys(initialExtractedData).length !== 0
-    ) {
-      openGenericModal(
-        <div className="warning-modal">
-          <p>
-            Are you sure?
-            <br />
-            <br />
-            This will refresh your updated choices, and you will lose
-            your changes.
-            <br />
-            <br />
-            <div className="confirm-tip">
-              To simply update the prediction, select "Adjust Prediction".
-            </div>
-          </p>
-          <button className="red-button" onClick={handleWarningConfirm}>
-            Yes
-          </button>
-          <button onClick={handleWarningCancel}>No</button>
-        </div>
-      );
-
-    } else if (
-      Object.keys(initialExtractedData).length === 0 &&
-      Object.keys(buildingData).length !== 0
-    ) {
-      openGenericModal(
-        <div className="warning-modal">
-          <p>
-            Are you sure?
-            <br />
-            <br />
-            This will refresh your project with new building features.
-            <br />
-            <br />
-            <div className="confirm-tip">
-              To simply update the prediction, select "Adjust Prediction".
-            </div>
-          </p>
-          <button className="red-button" onClick={handleWarningConfirm}>
-            Yes
-          </button>
-          <button onClick={handleWarningCancel}>No</button>
-        </div>
-      );
-    } else {
-      await recalculate();
-    }
+    setBuildingData((prev) => ({ ...prev, [option]: value }));
   };
 
   const recalculate = async () => {
@@ -125,33 +80,85 @@ const Project = () => {
       const extractedData = await extract(description);
       setBuildingData(extractedData);
       const predictionValue = await predict(extractedData);
-      setPrediction(parseFloat(predictionValue[0].toFixed(2)));
+      setPrediction(parseFloat(predictionValue[0]).toFixed(2));
     } catch (error) {
       console.error("Error during recalculate:", error);
+      openGenericModal(
+        <div>
+          <p>Could not recalculate. Check your connection and try again.</p>
+          <div className="modal-actions">
+            <Button variant="primary" onClick={closeGenericModal}>
+              OK
+            </Button>
+          </div>
+        </div>
+      );
     }
     setLoading(false);
   };
 
-  const handleWarningConfirm = async () => {
-    await recalculate();
+  const handleRecalculate = async () => {
+    const hasChanges =
+      JSON.stringify(buildingData) !== JSON.stringify(initialExtractedData);
+    const hasData = Object.keys(buildingData).length !== 0;
+
+    if (hasChanges && Object.keys(initialExtractedData).length !== 0) {
+      openGenericModal(
+        <div>
+          <p>
+            This will refresh extracted features from your description and you
+            will lose manual edits.
+          </p>
+          <p className="confirm-tip">
+            To update only the prediction, use Adjust Prediction.
+          </p>
+          <div className="modal-actions">
+            <Button variant="danger" onClick={recalculate}>
+              Yes, refresh
+            </Button>
+            <Button variant="secondary" onClick={closeGenericModal}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      );
+    } else if (
+      Object.keys(initialExtractedData).length === 0 &&
+      hasData
+    ) {
+      openGenericModal(
+        <div>
+          <p>This will replace current fields with a new extraction.</p>
+          <div className="modal-actions">
+            <Button variant="danger" onClick={recalculate}>
+              Yes, refresh
+            </Button>
+            <Button variant="secondary" onClick={closeGenericModal}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      );
+    } else {
+      await recalculate();
+    }
   };
 
-  const handleWarningCancel = () => {
-    closeGenericModal();
-  };
-
-  const allFieldsNone = (data) => {
-    return Object.values(data).every(
+  const allFieldsNone = (data) =>
+    Object.values(data).every(
       (value) => value === "None" || value === null || value === ""
     );
-  };
 
   const handleCalculate = async () => {
     if (allFieldsNone(buildingData)) {
       openGenericModal(
-        <div className="warning-modal">
+        <div>
           <p>Please input more data to make a prediction.</p>
-          <button onClick={closeGenericModal}>OK</button>
+          <div className="modal-actions">
+            <Button variant="primary" onClick={closeGenericModal}>
+              OK
+            </Button>
+          </div>
         </div>
       );
       return;
@@ -159,9 +166,19 @@ const Project = () => {
 
     try {
       const predictionValue = await predict(buildingData);
-      setPrediction(parseFloat(predictionValue[0].toFixed(2)));
+      setPrediction(parseFloat(predictionValue[0]).toFixed(2));
     } catch (error) {
       console.error("Error during calculate:", error);
+      openGenericModal(
+        <div>
+          <p>Prediction failed. Please try again.</p>
+          <div className="modal-actions">
+            <Button variant="primary" onClick={closeGenericModal}>
+              OK
+            </Button>
+          </div>
+        </div>
+      );
     }
   };
 
@@ -179,12 +196,8 @@ const Project = () => {
     };
 
     if (option === "Basement Walls Material") {
-      const storeysBelowGround = buildingData["Storeys Below Ground"];
-      return (
-        storeysBelowGround === 0 ||
-        storeysBelowGround === undefined ||
-        storeysBelowGround === ""
-      );
+      const storeys = buildingData["Storeys Below Ground"];
+      return storeys === 0 || storeys === undefined || storeys === "";
     }
 
     const disabledOption = constraints[option];
@@ -209,19 +222,18 @@ const Project = () => {
       "Capping Beams Material":
         "Cannot have Capping Beams with Raft Foundation",
       "Basement Walls Material":
-        "Cannot have Basement Walls without Basement Floors",
+        "Cannot have Basement Walls without basement storeys",
       "Floor Slab Material": "Cannot have Floor Slab with Joisted Floors",
       "Joisted Floors Material": "Cannot have Joisted Floors with Floor Slab",
       "Sub-Sector": "Non-residential sub-sectors not yet available",
     };
-
     return tooltips[option] || "";
   };
 
   const filteredSubSectorOptions = () => {
     if (buildingData["Sector"] === "Residential") {
       return options.subSectors.options.filter(
-        (option) => option !== "Non-residential"
+        (o) => o !== "Non-residential"
       );
     }
     return options.subSectors.options;
@@ -230,41 +242,57 @@ const Project = () => {
   const filteredJoistedFloorOptions = () => {
     if (buildingData["Sector"] === "Residential") {
       return options.materials.structure.joistedFloors.options.filter(
-        (option) => option !== "Timber Joists (Office)"
+        (o) => o !== "Timber Joists (Office)"
       );
-    } else if (buildingData["Sector"] === "Non-residential") {
+    }
+    if (buildingData["Sector"] === "Non-residential") {
       return options.materials.structure.joistedFloors.options.filter(
-        (option) => option !== "Timber Joists (Domestic)"
+        (o) => o !== "Timber Joists (Domestic)"
       );
     }
     return options.materials.structure.joistedFloors.options;
   };
 
-  const handleMouseOver = (e, tooltipText) => {
-    const tooltip = tooltipRef.current;
-    tooltip.style.visibility = "visible";
-    tooltip.innerText = tooltipText;
-    const rect = e.target.getBoundingClientRect();
-    const tooltipRect = tooltip.getBoundingClientRect();
-    tooltip.style.top = `${rect.top - tooltipRect.height - 10}px`;
-    tooltip.style.left = `${
-      rect.left + rect.width / 2 - tooltipRect.width / 2
-    }px`;
-  };
+  const renderSelect = (category, subcategory) => {
+    const fieldName = options.materials[category][subcategory].name;
+    const disabled = loading || isDisabled(fieldName);
+    const tooltipText = getTooltip(fieldName);
+    const selectOpts =
+      subcategory === "joistedFloors"
+        ? filteredJoistedFloorOptions()
+        : options.materials[category][subcategory].options;
 
-  const handleMouseOut = () => {
-    const tooltip = tooltipRef.current;
-    tooltip.style.visibility = "hidden";
+    const selectEl = (
+      <select
+        className="project-select"
+        value={mappedData[fieldName] ?? "None"}
+        onChange={(e) =>
+          handleDropdownChange(category, fieldName, e.target.value)
+        }
+        disabled={disabled}
+      >
+        {selectOpts.map((opt) => (
+          <option key={opt} value={opt}>
+            {stripMaterial(opt)}
+          </option>
+        ))}
+        <option value="None">None</option>
+      </select>
+    );
+
+    return (
+      <Tooltip content={tooltipText} disabled={disabled && !!tooltipText}>
+        {selectEl}
+      </Tooltip>
+    );
   };
 
   const handleExport = () => {
     const replaceNullsWithNone = (value) =>
       value === null || value === "" ? "None" : value;
 
-    // Extract all necessary features from options.json
-    const extractNecessaryFeatures = (options) => {
+    const extractNecessaryFeatures = (opts) => {
       const features = [];
-
       const extractFromCategory = (category) => {
         for (const subCategory in category) {
           if (category[subCategory].name) {
@@ -272,26 +300,21 @@ const Project = () => {
           }
         }
       };
-
-      extractFromCategory(options.materials.substructure);
-      extractFromCategory(options.materials.structure);
-      extractFromCategory(options.materials.external);
-      extractFromCategory(options.materials.internal);
-
-      features.push(options.sectors.name);
-      features.push(options.subSectors.name);
-      features.push(...options.numericalOptions);
-
+      extractFromCategory(opts.materials.substructure);
+      extractFromCategory(opts.materials.structure);
+      extractFromCategory(opts.materials.external);
+      extractFromCategory(opts.materials.internal);
+      features.push(opts.sectors.name);
+      features.push(opts.subSectors.name);
+      features.push(...opts.numericalOptions);
       return features;
     };
 
     const necessaryFeatures = extractNecessaryFeatures(options);
-
-    // Append missing features with default values
     const updatedBuildingData = { ...buildingData };
     necessaryFeatures.forEach((feature) => {
       if (!updatedBuildingData.hasOwnProperty(feature)) {
-        updatedBuildingData[feature] = "None"; // Default value for missing features
+        updatedBuildingData[feature] = "None";
       }
     });
 
@@ -301,7 +324,7 @@ const Project = () => {
         description: "prediction",
         value: (prediction ? prediction.toString() : "0") + " kgCO2/m^2",
       },
-      { description: "", value: "" }, // Empty row for space
+      { description: "", value: "" },
       ...Object.entries(updatedBuildingData).map(([feature, value]) => ({
         description: feature,
         value: replaceNullsWithNone(value),
@@ -309,234 +332,162 @@ const Project = () => {
     ];
 
     const csv = Papa.unparse(dataToExport);
-
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-
-    // Generate a unique filename based on the current date and time
     const timestamp = new Date().toISOString().replace(/[:.-]/g, "");
-    const filename = `ECO_Project${timestamp}.csv`;
-
-    saveAs(blob, filename);
+    saveAs(blob, `ECO_Project${timestamp}.csv`);
   };
 
-
   return (
-    <div className="project-container">
+    <div className={`project ${loading ? "is-loading" : ""}`}>
       {loading && (
-        <div className="loading-overlay">
-          <Loader />
+        <div className="project__overlay" aria-busy="true">
+          <div className="project__spinner" />
+          <span>Processing…</span>
         </div>
       )}
-      <div className={`resize-container ${loading ? "loading" : ""}`}>
-        <div className="header-container">
-          <div className="card">
-            <h3>Description</h3>
-            <div className="card-content description-box">
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
+
+      <div className="project__hero">
+        <Card padding="md" className="project__hero-card">
+          <h3>Description</h3>
+          <div className="project__desc-row">
+            <textarea
+              className="project__textarea"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              disabled={loading}
+              rows={3}
+            />
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleRecalculate}
+              disabled={loading}
+              title="Re-extract from description"
+            >
+              {description === initialInput && initialInput ? "↻" : "↑"}
+            </Button>
+          </div>
+        </Card>
+
+        <Card padding="md" className="project__hero-card project__hero-prediction">
+          <h3>Prediction</h3>
+          <div className="project__prediction-row">
+            <p className="project__prediction-value">
+              {prediction || "—"}{" "}
+              <span>kgCO₂e/m<sup>2</sup></span>
+            </p>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleCalculate}
+              disabled={loading}
+            >
+              Adjust prediction
+            </Button>
+          </div>
+        </Card>
+
+        <Card padding="md" className="project__hero-card project__hero-export">
+          <h3>Export</h3>
+          <Button variant="secondary" onClick={handleExport} disabled={loading}>
+            Export CSV
+          </Button>
+        </Card>
+      </div>
+
+      <div className="project__sections">
+        {Object.keys(options.materials).map((category) => (
+          <CollapsibleSection
+            key={category}
+            title={sectionNames[category]}
+            defaultOpen={category === "substructure" || category === "structure"}
+          >
+            {Object.keys(options.materials[category]).map((subcategory) => (
+              <div key={subcategory} className="project__row">
+                <label>
+                  {stripMaterial(
+                    options.materials[category][subcategory].name
+                  )}
+                </label>
+                {renderSelect(category, subcategory)}
+              </div>
+            ))}
+          </CollapsibleSection>
+        ))}
+
+        <CollapsibleSection title="Typology" defaultOpen>
+          <div className="project__row">
+            <label>{stripMaterial(options.sectors.name)}</label>
+            <select
+              className="project-select"
+              value={mappedData[options.sectors.name] ?? "None"}
+              onChange={(e) =>
+                handleDropdownChange("sectors", options.sectors.name, e.target.value)
+              }
+              disabled={loading}
+            >
+              {options.sectors.options.map((opt) => (
+                <option key={opt} value={opt}>
+                  {stripMaterial(opt)}
+                </option>
+              ))}
+              <option value="None">None</option>
+            </select>
+          </div>
+          <div className="project__row">
+            <label>{stripMaterial(options.subSectors.name)}</label>
+            <Tooltip
+              content={getTooltip("Sub-Sector")}
+              disabled={
+                (loading || buildingData["Sector"] === "Non-residential") &&
+                !!getTooltip("Sub-Sector")
+              }
+            >
+              <select
+                className="project-select"
+                value={
+                  buildingData["Sector"] === "Non-residential"
+                    ? "Non-residential"
+                    : mappedData[options.subSectors.name] ?? "None"
+                }
+                onChange={(e) =>
+                  handleDropdownChange(
+                    "subSectors",
+                    options.subSectors.name,
+                    e.target.value
+                  )
+                }
+                disabled={
+                  loading || buildingData["Sector"] === "Non-residential"
+                }
+              >
+                {filteredSubSectorOptions().map((opt) => (
+                  <option key={opt} value={opt}>
+                    {stripMaterial(opt)}
+                  </option>
+                ))}
+                <option value="None">None</option>
+              </select>
+            </Tooltip>
+          </div>
+        </CollapsibleSection>
+
+        <CollapsibleSection title="General Building Info" defaultOpen>
+          {options.numericalOptions.map((option) => (
+            <div key={option} className="project__row">
+              <label>{stripMaterial(option)}</label>
+              <input
+                type="number"
+                className="project-input"
+                value={mappedData[option] ?? ""}
+                placeholder="None"
+                onChange={(e) => handleInputChange(option, e.target.value)}
                 disabled={loading}
               />
-              <button onClick={handleRecalculate} disabled={loading}>
-                <i
-                  className={
-                    description === initialInput && initialInput
-                      ? "fas fa-redo"
-                      : "fas fa-arrow-up"
-                  }
-                ></i>
-              </button>
-            </div>
-          </div>
-          <div className="card">
-            <div>
-              <h3>Prediction</h3>
-            </div>
-            <div className="card-content">
-              <div className="prediction">
-                <p>
-                  {prediction || 0} kgCO2e/m<sup>2</sup>
-                </p>
-                <button
-                  className="project-predict-button"
-                  onClick={handleCalculate}
-                  disabled={loading}
-                >
-                  Adjust Prediction
-                </button>
-              </div>
-            </div>
-          </div>
-          <div className="card">
-            <h3>Export Project</h3>
-            <div className="card-content">
-              <div className="csv-button">
-                <button onClick={handleExport} disabled={loading}>
-                  Export to CSV
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid-container">
-          {Object.keys(options.materials).map((category) => (
-            <div key={category} className="card">
-              <h3>{sectionNames[category]}</h3>
-              <div className="card-content">
-                {Object.keys(options.materials[category]).map((subcategory) => (
-                  <div key={subcategory} className="data-row">
-                    <span className="data-label">
-                      {stripMaterial(
-                        options.materials[category][subcategory].name
-                      )}
-                      :
-                    </span>
-                    <span className="data-value">
-                      <select
-                        value={
-                          mappedData[
-                            options.materials[category][subcategory].name
-                          ] ?? "None"
-                        }
-                        onChange={(e) =>
-                          handleDropdownChange(
-                            category,
-                            options.materials[category][subcategory].name,
-                            e.target.value
-                          )
-                        }
-                        disabled={
-                          loading ||
-                          isDisabled(
-                            options.materials[category][subcategory].name
-                          )
-                        }
-                        onMouseOver={(e) =>
-                          isDisabled(
-                            options.materials[category][subcategory].name
-                          ) &&
-                          handleMouseOver(
-                            e,
-                            getTooltip(
-                              options.materials[category][subcategory].name
-                            )
-                          )
-                        }
-                        onMouseOut={handleMouseOut}
-                      >
-                        {(subcategory === "joistedFloors"
-                          ? filteredJoistedFloorOptions()
-                          : options.materials[category][subcategory].options
-                        ).map((option) => (
-                          <option key={option} value={option}>
-                            {stripMaterial(option)}
-                          </option>
-                        ))}
-                        <option value="None">None</option>
-                      </select>
-                    </span>
-                  </div>
-                ))}
-              </div>
             </div>
           ))}
-          <div className="card">
-            <h3>Typology</h3>
-            <div className="card-content">
-              <div className="data-row">
-                <span className="data-label">
-                  {stripMaterial(options.sectors.name)}:
-                </span>
-                <span className="data-value">
-                  <select
-                    value={mappedData[options.sectors.name] ?? "None"}
-                    onChange={(e) =>
-                      handleDropdownChange(
-                        "sectors",
-                        options.sectors.name,
-                        e.target.value
-                      )
-                    }
-                    disabled={loading}
-                    onMouseOut={handleMouseOut}
-                  >
-                    {(options.sectors.options || []).map((option) => (
-                      <option key={option} value={option}>
-                        {stripMaterial(option)}
-                      </option>
-                    ))}
-                    <option value="None">None</option>
-                  </select>
-                </span>
-              </div>
-              <div className="data-row">
-                <span className="data-label">
-                  {stripMaterial(options.subSectors.name)}:
-                </span>
-                <span className="data-value">
-                  <select
-                    value={
-                      buildingData["Sector"] === "Non-residential"
-                        ? "Non-residential"
-                        : mappedData[options.subSectors.name] ?? "None"
-                    }
-                    onChange={(e) =>
-                      handleDropdownChange(
-                        "subSectors",
-                        options.subSectors.name,
-                        e.target.value
-                      )
-                    }
-                    disabled={
-                      loading || buildingData["Sector"] === "Non-residential"
-                    }
-                    onMouseOver={(e) =>
-                      isDisabled("Sub-Sector") &&
-                      handleMouseOver(e, getTooltip("Sub-Sector"))
-                    }
-                    onMouseOut={handleMouseOut}
-                  >
-                    {filteredSubSectorOptions().map((option) => (
-                      <option key={option} value={option}>
-                        {stripMaterial(option)}
-                      </option>
-                    ))}
-                    <option value="None">None</option>
-                  </select>
-                </span>
-              </div>
-            </div>
-          </div>
-          <div className="card">
-            <h3>General Building Info</h3>
-            <div className="card-content">
-              {options.numericalOptions.map((option) => (
-                <div key={option} className="data-row">
-                  <span className="data-label">{stripMaterial(option)}:</span>
-                  <span className="data-value">
-                    <input
-                      type="number"
-                      value={mappedData[option] ?? ""}
-                      placeholder="None"
-                      onChange={(e) =>
-                        handleInputChange(option, e.target.value)
-                      }
-                      disabled={loading}
-                      onMouseOver={(e) =>
-                        isDisabled(option) &&
-                        handleMouseOver(e, getTooltip(option))
-                      }
-                      onMouseOut={handleMouseOut}
-                    />
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        </CollapsibleSection>
       </div>
-      <div className="tooltip" ref={tooltipRef}></div>
     </div>
   );
 };

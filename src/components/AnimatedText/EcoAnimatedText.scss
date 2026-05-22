@@ -1,0 +1,11 @@
+.eco-animated-text {
+  position: absolute;
+  top: var(--s-4);
+  left: var(--s-4);
+  right: var(--s-4);
+  pointer-events: none;
+  color: var(--text-subtle);
+  font-size: 15px;
+  line-height: 1.5;
+  z-index: 0;
+}
