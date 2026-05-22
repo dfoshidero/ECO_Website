@@ -15,7 +15,7 @@ import {
   insightExampleInputs,
   insightPlaceholders,
 } from "../../data/examples";
-import logo from "../../assets/images/logo-head-nbg.svg";
+import { useTheme } from "../../context/ThemeContext";
 import "./InsightPage.scss";
 
 const getRandomExamples = (arr, num) => {
@@ -30,7 +30,11 @@ const getRandomExamples = (arr, num) => {
 const Insight = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const autoRunDone = useRef(false);
+  const logoSrc = `${process.env.PUBLIC_URL}/assets/images/${
+    theme === "dark" ? "logo-white.png" : "logo-dark.png"
+  }`;
 
   const [description, setDescription] = useState("");
   const [prediction, setPrediction] = useState(null);
@@ -146,7 +150,7 @@ const Insight = () => {
   return (
     <div className="insight">
       <header className="insight__header">
-        <img src={logo} alt="" className="insight__logo" />
+        <img src={logoSrc} alt="" className="insight__logo" />
         <div>
           <h1 className="insight__greeting">{greeting}</h1>
           <p className="insight__hint">

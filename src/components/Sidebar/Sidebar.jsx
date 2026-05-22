@@ -16,7 +16,7 @@ import { HiMenu } from "react-icons/hi";
 import { HiOutlineChevronDoubleLeft } from "react-icons/hi2";
 import { ThemeToggle } from "../ui";
 import { paperUrl } from "../../data/docs";
-import logo from "../../assets/images/logo-head-nbg.svg";
+import { useTheme } from "../../context/ThemeContext";
 import "./Sidebar.scss";
 
 const navItems = [
@@ -28,7 +28,11 @@ const navItems = [
 
 const Sidebar = ({ isOpen, isMobile, toggleSidebar, onNavigate }) => {
   const location = useLocation();
+  const { theme } = useTheme();
   const year = new Date().getFullYear();
+  const logoSrc = `${process.env.PUBLIC_URL}/assets/images/${
+    theme === "dark" ? "logo-white.png" : "logo-dark.png"
+  }`;
 
   const isActive = (path) =>
     path === "/"
@@ -52,7 +56,7 @@ const Sidebar = ({ isOpen, isMobile, toggleSidebar, onNavigate }) => {
         }`}
       >
         <div className="sidebar__brand">
-          <img src={logo} alt="ECO" className="sidebar__logo" />
+          <img src={logoSrc} alt="ECO" className="sidebar__logo" />
           <div className="sidebar__brand-text">
             <span className="sidebar__name">ECO</span>
             <span className="sidebar__tagline">Carbon Observer</span>
