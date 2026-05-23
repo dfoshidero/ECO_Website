@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaArrowRight, FaRandom } from "react-icons/fa";
+import { FaArrowRight, FaRandom, FaSyncAlt } from "react-icons/fa";
 import emailjs from "emailjs-com";
 import EcoAnimatedText from "../components/AnimatedText/EcoAnimatedText";
 import { Button, Card, Input, Textarea } from "../components/ui";
@@ -31,7 +31,15 @@ const stats = [
   { value: "30+", label: "Material classes" },
 ];
 
-const heroExamples = insightExampleInputs.slice(0, 3);
+const getRandomExamples = (arr, num) => {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, num);
+};
+
 const animatedExamples = homeExamples.map((e) => e.text);
 
 const HomePage = () => {
@@ -42,6 +50,43 @@ const HomePage = () => {
   }`;
   const [heroInput, setHeroInput] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [heroExamples, setHeroExamples] = useState(() =>
+    getRandomExamples(insightExampleInputs, 3)
+  );
+  const chipsRef = useRef(null);
+  const rowFitAttemptsRef = useRef(0);
+  const MAX_ROW_FIT_ATTEMPTS = 20;
+
+  useLayoutEffect(() => {
+    const container = chipsRef.current;
+    if (!container) return;
+    const chips = Array.from(
+      container.querySelectorAll(".home-hero__chip")
+    );
+    if (chips.length === 0) return;
+
+    const rowTops = new Set(chips.map((c) => c.offsetTop));
+    if (rowTops.size > 2 && rowFitAttemptsRef.current < MAX_ROW_FIT_ATTEMPTS) {
+      rowFitAttemptsRef.current += 1;
+      setHeroExamples(getRandomExamples(insightExampleInputs, 3));
+    } else {
+      rowFitAttemptsRef.current = 0;
+    }
+  }, [heroExamples]);
+
+  const shuffleHeroExamples = () => {
+    rowFitAttemptsRef.current = 0;
+    setHeroExamples((current) => {
+      let next = getRandomExamples(insightExampleInputs, 3);
+      if (
+        next.length === current.length &&
+        next.every((s, i) => s === current[i])
+      ) {
+        next = getRandomExamples(insightExampleInputs, 3);
+      }
+      return next;
+    });
+  };
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -148,17 +193,28 @@ const HomePage = () => {
           </button>
         </div>
 
-        <div className="home-hero__chips">
-          {heroExamples.map((ex) => (
-            <button
-              key={ex}
-              type="button"
-              className="home-hero__chip"
-              onClick={() => setHeroInput(ex)}
-            >
-              {ex}
-            </button>
-          ))}
+        <div className="home-hero__examples">
+          <div className="home-hero__chips" ref={chipsRef}>
+            {heroExamples.map((ex) => (
+              <button
+                key={ex}
+                type="button"
+                className="home-hero__chip"
+                onClick={() => setHeroInput(ex)}
+              >
+                {ex}
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="home-hero__shuffle"
+            onClick={shuffleHeroExamples}
+            aria-label="Shuffle examples"
+            title="Shuffle examples"
+          >
+            <FaSyncAlt />
+          </button>
         </div>
 
         <button

@@ -125,11 +125,11 @@
     }
   }
 
-  &__chips {
+  &__examples {
+    position: relative;
     display: flex;
-    flex-wrap: wrap;
+    align-items: center;
     justify-content: center;
-    gap: var(--s-2);
     width: 100%;
     max-width: 640px;
     margin: 0 auto var(--s-3);
@@ -137,6 +137,15 @@
     @media (max-width: 600px) {
       display: none;
     }
+  }
+
+  &__chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--s-2);
+    width: 100%;
+    padding-right: 36px;
   }
 
   &__chip {
@@ -154,6 +163,34 @@
     &:hover {
       border-color: var(--accent);
       color: var(--accent);
+    }
+  }
+
+  &__shuffle {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-full);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: border-color var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out),
+      transform var(--dur-base) var(--ease-out);
+
+    &:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-50%) rotate(180deg);
     }
   }
 
