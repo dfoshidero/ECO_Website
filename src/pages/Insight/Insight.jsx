@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
+import { FaSyncAlt } from "react-icons/fa";
 import { extract, predict } from "../../utils/modelapi";
 import {
   loadSession,
@@ -112,6 +113,19 @@ const Insight = () => {
   const handleExampleClick = (input) => {
     setDescription(input);
     runPrediction(input);
+  };
+
+  const shuffleRandomExamples = () => {
+    setRandomExamples((current) => {
+      let next = getRandomExamples(insightExampleInputs, 3);
+      if (
+        next.length === current.length &&
+        next.every((s, i) => s === current[i])
+      ) {
+        next = getRandomExamples(insightExampleInputs, 3);
+      }
+      return next;
+    });
   };
 
   const handleFocus = () => {
@@ -264,17 +278,28 @@ const Insight = () => {
           {description === "" && (
             <div className="insight__examples">
               <p className="insight__examples-label">Try an example</p>
-              <div className="insight__examples-list">
-                {randomExamples.map((input) => (
-                  <button
-                    key={input}
-                    type="button"
-                    className="insight__example-chip"
-                    onClick={() => handleExampleClick(input)}
-                  >
-                    {input}
-                  </button>
-                ))}
+              <div className="insight__examples-row">
+                <div className="insight__examples-list">
+                  {randomExamples.map((input) => (
+                    <button
+                      key={input}
+                      type="button"
+                      className="insight__example-chip"
+                      onClick={() => handleExampleClick(input)}
+                    >
+                      {input}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  className="insight__examples-shuffle"
+                  onClick={shuffleRandomExamples}
+                  aria-label="Shuffle examples"
+                  title="Shuffle examples"
+                >
+                  <FaSyncAlt />
+                </button>
               </div>
             </div>
           )}
