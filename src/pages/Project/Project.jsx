@@ -400,7 +400,7 @@ const Project = () => {
           <CollapsibleSection
             key={category}
             title={sectionNames[category]}
-            defaultOpen={category === "substructure" || category === "structure"}
+            defaultOpen
           >
             {Object.keys(options.materials[category]).map((subcategory) => (
               <div key={subcategory} className="project__row">
