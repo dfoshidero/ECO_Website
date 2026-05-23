@@ -6,6 +6,7 @@ import EcoAnimatedText from "../components/AnimatedText/EcoAnimatedText";
 import { Button, Card, Input, Textarea } from "../components/ui";
 import { homeExamples, insightExampleInputs } from "../data/examples";
 import { paperUrl } from "../data/docs";
+import { partners } from "../data/partners";
 import "./HomePage.scss";
 
 const steps = [
@@ -173,6 +174,33 @@ const HomePage = () => {
             </Card>
           ))}
         </div>
+      </section>
+
+      <section className="home-partners">
+        <h2 className="home-section-title">Backed by</h2>
+        <ul className="home-partners__list">
+          {partners.map(({ name, href, logoLight, logoDark, invertInDarkMode }) => (
+            <li key={name} className="home-partners__item">
+              <a href={href} target="_blank" rel="noreferrer" aria-label={name}>
+                <img
+                  className="home-partners__logo home-partners__logo--light"
+                  src={logoLight}
+                  alt={name}
+                  loading="lazy"
+                />
+                <img
+                  className={`home-partners__logo home-partners__logo--dark${
+                    invertInDarkMode ? " home-partners__logo--invert" : ""
+                  }`}
+                  src={logoDark}
+                  alt=""
+                  aria-hidden="true"
+                  loading="lazy"
+                />
+              </a>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="home-about">
