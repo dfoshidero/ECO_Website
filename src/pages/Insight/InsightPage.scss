@@ -134,14 +134,32 @@
     color: var(--text-muted);
   }
 
-  &__low-confidence {
+  &__coverage {
     margin: 0;
     font-size: 13px;
-    color: var(--warning);
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+
+  &__coverage-note {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.45;
     padding: var(--s-2) var(--s-3);
-    background: var(--warning-soft);
     border-radius: var(--r-sm);
     max-width: 100%;
+    text-align: left;
+  }
+
+  &__coverage-note--low {
+    color: var(--warning);
+    background: var(--warning-soft);
+  }
+
+  &__coverage-note--partial {
+    color: var(--text-muted);
+    background: transparent;
+    padding: 0;
   }
 
   &__chips {

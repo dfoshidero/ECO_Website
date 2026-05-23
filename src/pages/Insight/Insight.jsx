@@ -6,7 +6,8 @@ import {
   saveSession,
   createSessionItem,
   getGreeting,
-  countValidFields,
+  getCoverage,
+  formatCoveragePercent,
   getFeatureChips,
 } from "../../utils/sessionHistory";
 import EcoAnimatedText from "../../components/AnimatedText/EcoAnimatedText";
@@ -39,7 +40,7 @@ const Insight = () => {
   const [description, setDescription] = useState("");
   const [prediction, setPrediction] = useState(null);
   const [extractedData, setExtractedData] = useState({});
-  const [lowConfidence, setLowConfidence] = useState(false);
+  const [coverage, setCoverage] = useState(null);
   const [isFocused, setIsFocused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -64,7 +65,7 @@ const Insight = () => {
 
     setPrediction(null);
     setError("");
-    setLowConfidence(false);
+    setCoverage(null);
     setIsLoading(true);
 
     try {
@@ -74,15 +75,14 @@ const Insight = () => {
       const value = parseFloat(result[0]).toFixed(2);
       setPrediction(value);
 
-      const validCount = countValidFields(extracted);
-      const isLow = validCount < 3;
-      setLowConfidence(isLow);
+      const coverageResult = getCoverage(extracted);
+      setCoverage(coverageResult);
 
       const item = createSessionItem({
         description: trimmed,
         prediction: value,
         extractedData: extracted,
-        lowConfidence: isLow,
+        coverage: coverageResult,
       });
       setSession((prev) => [item, ...prev].slice(0, 20));
       setActiveId(item.id);
@@ -123,7 +123,9 @@ const Insight = () => {
     setDescription(item.description);
     setPrediction(item.prediction);
     setExtractedData(item.extractedData);
-    setLowConfidence(item.lowConfidence);
+    setCoverage(
+      item.coverage ?? getCoverage(item.extractedData)
+    );
     setActiveId(item.id);
     setError("");
   };
@@ -154,9 +156,13 @@ const Insight = () => {
         <div>
           <h1 className="insight__greeting">{greeting}</h1>
           <p className="insight__hint">
-            Describe a building — ECO extracts features and predicts embodied
-            carbon. Not a chatbot; each entry is an independent prediction.
+            Describe a building — ECO extracts what it can and predicts embodied
+            carbon for those elements. The more detail you give, the more
+            accurate the estimate. 
           </p>
+          <br />
+          <p className="insight__hint">Not a chatbot; each entry is an independent
+            prediction.</p>
         </div>
       </header>
 
@@ -210,11 +216,32 @@ const Insight = () => {
                     kgCO₂e/m<sup>2</sup>
                   </span>
                 </div>
-                {lowConfidence && (
-                  <p className="insight__low-confidence">
-                    Low confidence — add more materials, structure, or dimensions
-                    for a sharper prediction.
-                  </p>
+                {coverage && (
+                  <>
+                    <p className="insight__coverage">
+                      {coverage.valid} of {coverage.total} fields detected (
+                      {formatCoveragePercent(coverage.ratio)}%)
+                    </p>
+                    {coverage.level === "low" && (
+                      <p
+                        className="insight__coverage-note insight__coverage-note--low"
+                        role="status"
+                      >
+                        <strong>Low coverage.</strong> ECO only picked up{" "}
+                        {coverage.valid} of {coverage.total} details from your
+                        description. Predictions get more accurate as your
+                        description gets longer.
+                      </p>
+                    )}
+                    {coverage.level === "partial" && (
+                      <p
+                        className="insight__coverage-note insight__coverage-note--partial"
+                        role="status"
+                      >
+                        Add more detail for a sharper estimate.
+                      </p>
+                    )}
+                  </>
                 )}
                 {chips.length > 0 && (
                   <div className="insight__chips">
@@ -226,7 +253,9 @@ const Insight = () => {
                   </div>
                 )}
                 <Button variant="secondary" size="sm" onClick={handleDetails}>
-                  See full details →
+                  {coverage?.level !== "good"
+                    ? "Add missing details →"
+                    : "See full details →"}
                 </Button>
               </div>
             )}

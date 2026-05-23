@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { mapExtractedDataToOptions } from "../../utils/utils";
+import {
+  getCoverage,
+  formatCoveragePercent,
+} from "../../utils/sessionHistory";
 import options from "../../data/options.json";
 import { extract, predict } from "../../utils/modelapi";
 import { useModal } from "../../context/ModalContext";
@@ -64,6 +68,8 @@ const Project = () => {
   }, [sector]);
 
   const mappedData = mapExtractedDataToOptions(buildingData, options);
+  const coverage = getCoverage(mappedData);
+  const coveragePct = formatCoveragePercent(coverage.ratio);
 
   const handleDropdownChange = (_category, subcategory, value) => {
     setBuildingData((prev) => ({ ...prev, [subcategory]: value }));
@@ -384,6 +390,25 @@ const Project = () => {
             >
               Adjust prediction
             </Button>
+          </div>
+          <div
+            className={`project__coverage project__coverage--${coverage.level}`}
+          >
+            <p className="project__coverage-line">
+              {coverage.valid} of {coverage.total} fields filled ({coveragePct}%)
+            </p>
+            {coverage.level === "low" && (
+              <p className="project__coverage-note">
+                <strong>Low coverage.</strong> Only {coverage.valid} of{" "}
+                {coverage.total} details are filled in. Predictions get more
+                accurate as you add more.
+              </p>
+            )}
+            {coverage.level === "partial" && (
+              <p className="project__coverage-note">
+                Add more detail for a sharper prediction.
+              </p>
+            )}
           </div>
         </Card>
 

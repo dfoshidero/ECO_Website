@@ -104,6 +104,38 @@
     }
   }
 
+  &__coverage {
+    margin-top: var(--s-3);
+    padding-top: var(--s-3);
+    border-top: 1px solid var(--border);
+  }
+
+  &__coverage-line {
+    margin: 0 0 var(--s-1);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+
+  &__coverage-note {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.4;
+    padding: var(--s-2) var(--s-3);
+    border-radius: var(--r-sm);
+  }
+
+  &__coverage--low .project__coverage-note {
+    color: var(--warning);
+    background: var(--warning-soft);
+  }
+
+  &__coverage--partial .project__coverage-note {
+    color: var(--text-muted);
+    background: transparent;
+    padding: 0;
+  }
+
   &__hero-export {
     display: flex;
     flex-direction: column;
