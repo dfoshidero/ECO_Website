@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FaArrowRight } from "react-icons/fa";
+import { FaArrowRight, FaRandom } from "react-icons/fa";
 import emailjs from "emailjs-com";
 import EcoAnimatedText from "../components/AnimatedText/EcoAnimatedText";
 import { Button, Card, Input, Textarea } from "../components/ui";
 import { homeExamples, insightExampleInputs } from "../data/examples";
 import { paperUrl } from "../data/docs";
 import { partners } from "../data/partners";
+import { useTheme } from "../context/ThemeContext";
 import "./HomePage.scss";
 
 const steps = [
@@ -35,6 +36,10 @@ const animatedExamples = homeExamples.map((e) => e.text);
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const logoSrc = `${process.env.PUBLIC_URL}/assets/images/${
+    theme === "dark" ? "logo-white.png" : "logo-dark.png"
+  }`;
   const [heroInput, setHeroInput] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [formData, setFormData] = useState({
@@ -62,6 +67,12 @@ const HomePage = () => {
       e.preventDefault();
       goToInsight(heroInput);
     }
+  };
+
+  const pickRandomExample = () => {
+    const pool = insightExampleInputs.filter((s) => s !== heroInput);
+    const next = pool[Math.floor(Math.random() * pool.length)];
+    setHeroInput(next);
   };
 
   const handleChange = (e) => {
@@ -100,6 +111,7 @@ const HomePage = () => {
   return (
     <div className="home">
       <section className="home-hero">
+        <img src={logoSrc} alt="ECO" className="home-hero__logo" />
         <p className="home-hero__eyebrow">Early-stage Carbon Observer</p>
         <h1 className="home-hero__title">
           Predict embodied carbon,
@@ -148,6 +160,14 @@ const HomePage = () => {
             </button>
           ))}
         </div>
+
+        <button
+          type="button"
+          className="home-hero__random"
+          onClick={pickRandomExample}
+        >
+          <FaRandom /> Try an example
+        </button>
 
         <p className="home-hero__secondary">
           <Link to="/support">Read the project documentation</Link>
