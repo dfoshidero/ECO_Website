@@ -36,7 +36,7 @@ function App() {
               <Route
                 path="/support"
                 element={
-                  <Layout pageTitle="More">
+                  <Layout pageTitle="Documentation">
                     <SupportPage />
                   </Layout>
                 }

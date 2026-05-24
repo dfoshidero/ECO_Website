@@ -56,10 +56,10 @@ const Sidebar = ({ isOpen, isMobile, toggleSidebar, onNavigate }) => {
         }`}
       >
         <div className="sidebar__brand">
-          <img src={logoSrc} alt="ECO" className="sidebar__logo" />
+          <img src={logoSrc} alt="Talking Carbon" className="sidebar__logo" />
           <div className="sidebar__brand-text">
-            <span className="sidebar__name">ECO</span>
-            <span className="sidebar__tagline">Carbon Observer</span>
+            <span className="sidebar__name">Talking Carbon</span>
+            <span className="sidebar__tagline">Early-stage Carbon Observer</span>
           </div>
           <button
             type="button"

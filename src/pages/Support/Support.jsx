@@ -13,7 +13,7 @@ const SupportPage = () => {
         <p className="docs__eyebrow">Embodied carbon prediction toolkit</p>
         <h1>Documentation</h1>
         <p>
-          What ECO does, how it works, and where it&apos;s headed.
+          What Talking Carbon does, how it works, and where it&apos;s headed.
         </p>
         <dl className="docs__meta">
           <div>

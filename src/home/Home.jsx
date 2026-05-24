@@ -156,7 +156,7 @@ const HomePage = () => {
   return (
     <div className="home">
       <section className="home-hero">
-        <img src={logoSrc} alt="ECO" className="home-hero__logo" />
+        <img src={logoSrc} alt="Talking Carbon" className="home-hero__logo" />
         <p className="home-hero__eyebrow">Early-stage Carbon Observer</p>
         <h1 className="home-hero__title">
           Predict embodied carbon,
@@ -281,9 +281,9 @@ const HomePage = () => {
 
       <section className="home-about">
         <div className="home-about__text">
-          <h2 className="home-section-title">About ECO</h2>
+          <h2 className="home-section-title">About Talking Carbon</h2>
           <p>
-            ECO turns a one-line building description into an embodied carbon
+            Talking Carbon turns a one-line building description into an embodied carbon
             estimate — so designers can compare concepts at the moment ideas
             form, not weeks later.
           </p>

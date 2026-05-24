@@ -3,14 +3,22 @@ import Sidebar from "../Sidebar/Sidebar";
 import "./Layout.scss";
 
 const MOBILE_BREAKPOINT = 1024;
+const SITE_NAME = "Talking Carbon";
 
-const Layout = ({ children }) => {
+const Layout = ({ children, pageTitle }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(
     () => window.innerWidth >= MOBILE_BREAKPOINT
   );
   const [isMobile, setIsMobile] = useState(
     () => window.innerWidth < MOBILE_BREAKPOINT
   );
+
+  useEffect(() => {
+    document.title =
+      pageTitle && pageTitle !== "Home"
+        ? `${pageTitle} | ${SITE_NAME}`
+        : SITE_NAME;
+  }, [pageTitle]);
 
   useEffect(() => {
     const onResize = () => {
@@ -55,7 +63,7 @@ const Layout = ({ children }) => {
           <div className="app-layout__page">{children}</div>
           <footer className="app-layout__footer">
             <small>
-              ECO is a proof of concept — verify predictions in Full View before
+              Talking Carbon is a proof of concept — verify predictions in Full View before
               critical decisions.
             </small>
           </footer>

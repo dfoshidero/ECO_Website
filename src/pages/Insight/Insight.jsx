@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { FaSyncAlt } from "react-icons/fa";
+import { FaSyncAlt, FaChevronDown, FaCheck } from "react-icons/fa";
 import { extract, predict } from "../../utils/modelapi";
 import {
   loadSession,
@@ -19,6 +19,15 @@ import {
 } from "../../data/examples";
 import { useTheme } from "../../context/ThemeContext";
 import "./InsightPage.scss";
+
+const MODELS = [
+  {
+    id: "eco-v1",
+    label: "ECO v1",
+    description: "Initial release · HistGradBoost",
+    available: true,
+  },
+];
 
 const getRandomExamples = (arr, num) => {
   const copy = [...arr];
@@ -50,6 +59,33 @@ const Insight = () => {
   );
   const [session, setSession] = useState(loadSession);
   const [activeId, setActiveId] = useState(null);
+  const [selectedModelId, setSelectedModelId] = useState(MODELS[0].id);
+  const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
+  const modelPickerRef = useRef(null);
+
+  const selectedModel =
+    MODELS.find((m) => m.id === selectedModelId) || MODELS[0];
+
+  useEffect(() => {
+    if (!isModelMenuOpen) return undefined;
+    const onDocClick = (e) => {
+      if (
+        modelPickerRef.current &&
+        !modelPickerRef.current.contains(e.target)
+      ) {
+        setIsModelMenuOpen(false);
+      }
+    };
+    const onKey = (e) => {
+      if (e.key === "Escape") setIsModelMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [isModelMenuOpen]);
 
   const greeting = getGreeting();
 
@@ -165,6 +201,67 @@ const Insight = () => {
 
   return (
     <div className="insight">
+      <div className="insight__topbar">
+        <div
+          className={`insight__model-picker ${
+            isModelMenuOpen ? "is-open" : ""
+          }`}
+          ref={modelPickerRef}
+        >
+          <button
+            type="button"
+            className="insight__model-picker-button"
+            onClick={() => setIsModelMenuOpen((v) => !v)}
+            aria-haspopup="listbox"
+            aria-expanded={isModelMenuOpen}
+            title="Choose model"
+          >
+            <span className="insight__model-picker-label">
+              {selectedModel.label}
+            </span>
+            <FaChevronDown className="insight__model-picker-caret" />
+          </button>
+          {isModelMenuOpen && (
+            <div className="insight__model-menu" role="listbox">
+              {MODELS.map((model) => {
+                const isSelected = model.id === selectedModelId;
+                return (
+                  <button
+                    key={model.id}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    className={`insight__model-option ${
+                      isSelected ? "is-selected" : ""
+                    }`}
+                    disabled={!model.available}
+                    onClick={() => {
+                      setSelectedModelId(model.id);
+                      setIsModelMenuOpen(false);
+                    }}
+                  >
+                    <span className="insight__model-option-main">
+                      <span className="insight__model-option-label">
+                        {model.label}
+                      </span>
+                      <span className="insight__model-option-desc">
+                        {model.description}
+                      </span>
+                    </span>
+                    {isSelected && (
+                      <FaCheck className="insight__model-option-check" />
+                    )}
+                  </button>
+                );
+              })}
+              <p className="insight__model-menu-hint">
+                More models coming soon.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
       <header className="insight__header">
         <img src={logoSrc} alt="" className="insight__logo" />
         <div>
@@ -318,7 +415,7 @@ const Insight = () => {
               </button>
             )}
             <Link to="/support" className="insight__rail-link">
-              How ECO works →
+              How Talking Carbon works →
             </Link>
           </div>
           {session.length === 0 ? (

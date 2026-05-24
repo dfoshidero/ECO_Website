@@ -340,7 +340,7 @@ const Project = () => {
     const csv = Papa.unparse(dataToExport);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const timestamp = new Date().toISOString().replace(/[:.-]/g, "");
-    saveAs(blob, `ECO_Project${timestamp}.csv`);
+    saveAs(blob, `TalkingCarbon_Project${timestamp}.csv`);
   };
 
   return (

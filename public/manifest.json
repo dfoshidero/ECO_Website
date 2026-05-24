@@ -1,6 +1,7 @@
 {
-  "short_name": "ECO",
-  "name": "ECO Toolkit",
+  "short_name": "Talking Carbon",
+  "name": "Talking Carbon",
+  "description": "Talking Carbon — an Early-stage Carbon Observer for intelligent sustainability forecasting in buildings.",
   "icons": [
     { "src": "favicon.svg", "type": "image/svg+xml", "sizes": "any" },
     { "src": "logo192.png", "type": "image/png", "sizes": "192x192" },
