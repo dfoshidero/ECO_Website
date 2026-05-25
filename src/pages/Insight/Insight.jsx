@@ -18,19 +18,13 @@ import { Button, Card } from "../../components/ui";
 import {
   insightExamples,
 } from "../../data/examples";
+import { getInsightModelOptions } from "../../data/docs";
 import { useTheme } from "../../context/ThemeContext";
 import "./InsightPage.scss";
 
 const SESSION_PREVIEW_COUNT = 6;
 
-const MODELS = [
-  {
-    id: "eco-v1",
-    label: "ECO v1",
-    description: "Initial release · HistGradBoost",
-    available: true,
-  },
-];
+const MODELS = getInsightModelOptions();
 
 const RESET_DRIFT_THRESHOLD = 5;
 
@@ -288,9 +282,6 @@ const Insight = () => {
                   </button>
                 );
               })}
-              <p className="insight__model-menu-hint">
-                More models coming soon.
-              </p>
             </div>
           )}
         </div>
