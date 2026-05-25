@@ -41,9 +41,14 @@
 
       
     <title>Talking Carbon</title>
+    <!-- Theme resolution order must match src/theme/theme.js (getInitialTheme). -->
     <script>
       (function () {
-        var t = localStorage.getItem("eco-theme");
+        var KEY = "eco-theme";
+        var t;
+        try {
+          t = localStorage.getItem(KEY);
+        } catch (e) {}
         if (t === "light" || t === "dark") {
           document.documentElement.dataset.theme = t;
         } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
