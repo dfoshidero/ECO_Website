@@ -26,7 +26,7 @@
 
   &__row {
     display: flex;
-    align-items: baseline;
+    align-items: stretch;
     height: var(--editor-row-height);
     padding: 0 var(--editor-pad-x);
     border-bottom: 1px solid var(--border);
@@ -38,7 +38,7 @@
     padding-right: var(--editor-gap);
     font-family: var(--font-mono);
     font-size: var(--editor-num-font-size);
-    line-height: var(--editor-line-height);
+    line-height: var(--editor-row-height);
     color: var(--ink);
     opacity: 0.55;
     text-align: right;
@@ -51,8 +51,8 @@
     min-width: 0;
     margin-left: var(--editor-gap);
     font-family: var(--font-mono);
-    font-size: calc(var(--editor-font-size) - 1px);
-    line-height: var(--editor-line-height);
+    font-size: var(--editor-font-size);
+    line-height: var(--editor-row-height);
     color: var(--text-subtle);
     opacity: 0.75;
     white-space: nowrap;

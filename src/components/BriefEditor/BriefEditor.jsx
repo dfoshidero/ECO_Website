@@ -16,8 +16,6 @@ const normalizePlaceholder = (placeholder) => {
   return placeholder ? [placeholder] : [];
 };
 
-const sanitize = (text) => text.replace(/[\r\n]+/g, " ");
-
 const BriefEditor = ({
   value,
   onChange,
@@ -62,18 +60,14 @@ const BriefEditor = ({
   }, [updateRows]);
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      if (e.metaKey || e.ctrlKey) {
-        e.preventDefault();
-        onSubmit?.();
-        return;
-      }
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
+      onSubmit?.();
     }
   };
 
   const handleChange = (e) => {
-    onChange(sanitize(e.target.value));
+    onChange(e.target.value);
   };
 
   const isEmpty = value === "";

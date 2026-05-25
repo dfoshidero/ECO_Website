@@ -193,10 +193,6 @@ const Insight = () => {
     });
   };
 
-  const handleFocus = () => {
-    setRandomExamples(getRandomExamples(insightExamples, 2));
-  };
-
   const handleSessionSelect = (item) => {
     setDescription(item.description);
     setPrediction(item.prediction);
@@ -309,7 +305,6 @@ const Insight = () => {
             <BriefEditor
               value={description}
               onChange={handleDescriptionChange}
-              onFocus={handleFocus}
               onSubmit={handlePredict}
               placeholder={[
                 "# building size, type, facade?",
