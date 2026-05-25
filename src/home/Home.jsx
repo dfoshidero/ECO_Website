@@ -1,7 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaArrowRight, FaRandom, FaSyncAlt } from "react-icons/fa";
-import emailjs from "emailjs-com";
 import EcoAnimatedText from "../components/AnimatedText/EcoAnimatedText";
 import { Button, Card, Input, Textarea } from "../components/ui";
 import { heroShortExamples, homeExamples } from "../data/examples";
@@ -41,6 +40,11 @@ const getRandomExamples = (arr, num) => {
 };
 
 const animatedExamples = homeExamples.map((e) => e.text);
+
+const encode = (data) =>
+  Object.keys(data)
+    .map((k) => encodeURIComponent(k) + "=" + encodeURIComponent(data[k]))
+    .join("&");
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -129,20 +133,11 @@ const HomePage = () => {
     e.preventDefault();
     setLoading(true);
     setError("");
-
-    const templateParams = {
-      name: formData.name,
-      email: formData.email,
-      message: formData.message,
-    };
-
-    emailjs
-      .send(
-        process.env.REACT_APP_EMAILJS_SERVICE_ID,
-        process.env.REACT_APP_EMAILJS_TEMPLATE_ID,
-        templateParams,
-        process.env.REACT_APP_EMAILJS_USER_ID
-      )
+    fetch("/", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: encode({ "form-name": "contact", ...formData }),
+    })
       .then(() => {
         setEmailSent(true);
         setFormData({ name: "", email: "", message: "" });
@@ -300,7 +295,21 @@ const HomePage = () => {
               Thanks — your message was sent successfully.
             </p>
           ) : (
-            <form onSubmit={handleSubmit} className="home-about__form">
+            <form
+              onSubmit={handleSubmit}
+              className="home-about__form"
+              name="contact"
+              method="POST"
+              data-netlify="true"
+              data-netlify-honeypot="bot-field"
+            >
+              <input type="hidden" name="form-name" value="contact" />
+              <p hidden>
+                <label>
+                  Don't fill this out:{" "}
+                  <input name="bot-field" onChange={handleChange} />
+                </label>
+              </p>
               <Input
                 label="Name"
                 name="name"
