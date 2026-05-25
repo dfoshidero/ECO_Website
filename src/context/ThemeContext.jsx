@@ -7,7 +7,7 @@ const ThemeContext = createContext(null);
 const getSystemTheme = () =>
   typeof window !== "undefined" &&
   window.matchMedia &&
-  window.matchMedia("(prefers-color-scheme: light)").matches
+  window.matchMedia("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
 
