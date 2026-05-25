@@ -11,14 +11,17 @@ import {
   formatCoveragePercent,
   getFeatureChips,
 } from "../../utils/sessionHistory";
-import EcoAnimatedText from "../../components/AnimatedText/EcoAnimatedText";
+import BriefEditor from "../../components/BriefEditor/BriefEditor";
+import RibaScale from "../../components/RibaScale/RibaScale";
+import ScrapBoard from "../../components/ScrapBoard/ScrapBoard";
 import { Button, Card } from "../../components/ui";
 import {
-  insightExampleInputs,
-  insightPlaceholders,
+  insightExamples,
 } from "../../data/examples";
 import { useTheme } from "../../context/ThemeContext";
 import "./InsightPage.scss";
+
+const SESSION_PREVIEW_COUNT = 6;
 
 const MODELS = [
   {
@@ -28,6 +31,8 @@ const MODELS = [
     available: true,
   },
 ];
+
+const RESET_DRIFT_THRESHOLD = 5;
 
 const getRandomExamples = (arr, num) => {
   const copy = [...arr];
@@ -43,6 +48,8 @@ const Insight = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const autoRunDone = useRef(false);
+  const requestIdRef = useRef(0);
+  const lastPredictedTextRef = useRef("");
   const logoSrc = `${process.env.PUBLIC_URL}/assets/images/${
     theme === "dark" ? "logo-white.png" : "logo-dark.png"
   }`;
@@ -51,14 +58,14 @@ const Insight = () => {
   const [prediction, setPrediction] = useState(null);
   const [extractedData, setExtractedData] = useState({});
   const [coverage, setCoverage] = useState(null);
-  const [isFocused, setIsFocused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [randomExamples, setRandomExamples] = useState(
-    () => getRandomExamples(insightExampleInputs, 3)
+    () => getRandomExamples(insightExamples, 2)
   );
   const [session, setSession] = useState(loadSession);
   const [activeId, setActiveId] = useState(null);
+  const [showAllSessions, setShowAllSessions] = useState(false);
   const [selectedModelId, setSelectedModelId] = useState(MODELS[0].id);
   const [isModelMenuOpen, setIsModelMenuOpen] = useState(false);
   const modelPickerRef = useRef(null);
@@ -100,6 +107,7 @@ const Insight = () => {
       return;
     }
 
+    const myId = ++requestIdRef.current;
     setPrediction(null);
     setError("");
     setCoverage(null);
@@ -107,13 +115,16 @@ const Insight = () => {
 
     try {
       const extracted = await extract(trimmed);
+      if (requestIdRef.current !== myId) return;
       setExtractedData(extracted);
       const result = await predict(extracted);
+      if (requestIdRef.current !== myId) return;
       const value = parseFloat(result[0]).toFixed(2);
       setPrediction(value);
 
       const coverageResult = getCoverage(extracted);
       setCoverage(coverageResult);
+      lastPredictedTextRef.current = trimmed;
 
       const item = createSessionItem({
         description: trimmed,
@@ -124,12 +135,13 @@ const Insight = () => {
       setSession((prev) => [item, ...prev].slice(0, 20));
       setActiveId(item.id);
     } catch (err) {
+      if (requestIdRef.current !== myId) return;
       console.error("Prediction error:", err);
       setError(
         "Could not reach the prediction API. Check your connection and try again."
       );
     } finally {
-      setIsLoading(false);
+      if (requestIdRef.current === myId) setIsLoading(false);
     }
   }, []);
 
@@ -146,6 +158,29 @@ const Insight = () => {
 
   const handlePredict = () => runPrediction(description);
 
+  const handleDescriptionChange = useCallback(
+    (next) => {
+      setDescription(next);
+      setError("");
+
+      if (prediction === null && !isLoading) return;
+
+      const baseline = lastPredictedTextRef.current;
+      const drift = Math.abs(next.length - baseline.length);
+      const cleared = next.trim() === "";
+
+      if (cleared || drift >= RESET_DRIFT_THRESHOLD) {
+        requestIdRef.current += 1;
+        setPrediction(null);
+        setExtractedData({});
+        setCoverage(null);
+        setActiveId(null);
+        setIsLoading(false);
+      }
+    },
+    [prediction, isLoading]
+  );
+
   const handleExampleClick = (input) => {
     setDescription(input);
     runPrediction(input);
@@ -153,20 +188,19 @@ const Insight = () => {
 
   const shuffleRandomExamples = () => {
     setRandomExamples((current) => {
-      let next = getRandomExamples(insightExampleInputs, 3);
+      let next = getRandomExamples(insightExamples, 2);
       if (
         next.length === current.length &&
-        next.every((s, i) => s === current[i])
+        next.every((example, i) => example.title === current[i]?.title)
       ) {
-        next = getRandomExamples(insightExampleInputs, 3);
+        next = getRandomExamples(insightExamples, 2);
       }
       return next;
     });
   };
 
   const handleFocus = () => {
-    setIsFocused(true);
-    setRandomExamples(getRandomExamples(insightExampleInputs, 3));
+    setRandomExamples(getRandomExamples(insightExamples, 2));
   };
 
   const handleSessionSelect = (item) => {
@@ -178,6 +212,7 @@ const Insight = () => {
     );
     setActiveId(item.id);
     setError("");
+    lastPredictedTextRef.current = item.description;
   };
 
   const clearSession = () => {
@@ -197,7 +232,6 @@ const Insight = () => {
   };
 
   const chips = getFeatureChips(extractedData);
-  const showPlaceholder = !isFocused && description === "";
 
   return (
     <div className="insight">
@@ -269,37 +303,30 @@ const Insight = () => {
           <p className="insight__hint">
             Describe a building — ECO extracts what it can and predicts embodied
             carbon for those elements. The more detail you give, the more
-            accurate the estimate. 
+            accurate the estimate.
           </p>
           <br />
-          <p className="insight__hint">Not a chatbot; each entry is an independent
-            prediction.</p>
+          <p className="insight__hint">
+            Not a chatbot; each entry is an independent prediction.
+          </p>
         </div>
       </header>
 
       <div className="insight__workspace">
         <div className="insight__main">
           <Card padding="md" className="insight__input-card">
-            <div className="insight__textarea-wrap">
-              {showPlaceholder && (
-                <EcoAnimatedText examples={insightPlaceholders} />
-              )}
-              <textarea
-                className="insight__textarea"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                onFocus={handleFocus}
-                onBlur={() => setIsFocused(false)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                    e.preventDefault();
-                    handlePredict();
-                  }
-                }}
-                rows={5}
-                aria-label="Building description"
-              />
-            </div>
+            <BriefEditor
+              value={description}
+              onChange={handleDescriptionChange}
+              onFocus={handleFocus}
+              onSubmit={handlePredict}
+              placeholder={[
+                "# building size, type, facade?",
+                "# structure and roof materials?",
+                "# anything unusual — glazing, foundations?",
+              ]}
+              ariaLabel="Building description"
+            />
 
             {error && (
               <div className="insight__error" role="alert">
@@ -327,6 +354,13 @@ const Insight = () => {
                     kgCO₂e/m<sup>2</sup>
                   </span>
                 </div>
+
+                <RibaScale
+                  value={prediction}
+                  extracted={extractedData}
+                  description={description}
+                />
+
                 {coverage && (
                   <>
                     <p className="insight__coverage">
@@ -376,15 +410,20 @@ const Insight = () => {
             <div className="insight__examples">
               <p className="insight__examples-label">Try an example</p>
               <div className="insight__examples-row">
-                <div className="insight__examples-list">
-                  {randomExamples.map((input) => (
+                <div className="insight__example-cards">
+                  {randomExamples.map((example) => (
                     <button
-                      key={input}
+                      key={example.title}
                       type="button"
-                      className="insight__example-chip"
-                      onClick={() => handleExampleClick(input)}
+                      className="insight__example-card"
+                      onClick={() => handleExampleClick(example.brief)}
                     >
-                      {input}
+                      <span className="insight__example-title">
+                        {example.title}
+                      </span>
+                      <span className="insight__example-brief">
+                        {example.brief}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -423,30 +462,30 @@ const Insight = () => {
               Predictions from this session appear here.
             </p>
           ) : (
-            <ul className="insight__rail-list">
-              {session.map((item) => (
-                <li key={item.id}>
+            <>
+              <ScrapBoard
+                items={
+                  showAllSessions
+                    ? session
+                    : session.slice(0, SESSION_PREVIEW_COUNT)
+                }
+                activeId={activeId}
+                onSelect={handleSessionSelect}
+              />
+              {session.length > SESSION_PREVIEW_COUNT && (
+                <div className="insight__rail-footer">
                   <button
                     type="button"
-                    className={`insight__rail-item ${
-                      activeId === item.id ? "active" : ""
-                    }`}
-                    onClick={() => handleSessionSelect(item)}
+                    className="insight__rail-toggle"
+                    onClick={() => setShowAllSessions((v) => !v)}
                   >
-                    <span className="insight__rail-value">
-                      {item.prediction} kgCO₂e/m²
-                    </span>
-                    <span className="insight__rail-snippet">{item.snippet}</span>
-                    <time className="insight__rail-time">
-                      {new Date(item.timestamp).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </time>
+                    {showAllSessions
+                      ? "Show fewer"
+                      : `Show all (${session.length})`}
                   </button>
-                </li>
-              ))}
-            </ul>
+                </div>
+              )}
+            </>
           )}
         </section>
       </div>

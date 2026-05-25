@@ -4,7 +4,7 @@ import { FaArrowRight, FaRandom, FaSyncAlt } from "react-icons/fa";
 import emailjs from "emailjs-com";
 import EcoAnimatedText from "../components/AnimatedText/EcoAnimatedText";
 import { Button, Card, Input, Textarea } from "../components/ui";
-import { homeExamples, insightExampleInputs } from "../data/examples";
+import { heroShortExamples, homeExamples } from "../data/examples";
 import { paperUrl } from "../data/docs";
 import { partners } from "../data/partners";
 import { useTheme } from "../context/ThemeContext";
@@ -51,7 +51,7 @@ const HomePage = () => {
   const [heroInput, setHeroInput] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [heroExamples, setHeroExamples] = useState(() =>
-    getRandomExamples(insightExampleInputs, 3)
+    getRandomExamples(heroShortExamples, 3)
   );
   const chipsRef = useRef(null);
   const rowFitAttemptsRef = useRef(0);
@@ -68,7 +68,7 @@ const HomePage = () => {
     const rowTops = new Set(chips.map((c) => c.offsetTop));
     if (rowTops.size > 2 && rowFitAttemptsRef.current < MAX_ROW_FIT_ATTEMPTS) {
       rowFitAttemptsRef.current += 1;
-      setHeroExamples(getRandomExamples(insightExampleInputs, 3));
+      setHeroExamples(getRandomExamples(heroShortExamples, 3));
     } else {
       rowFitAttemptsRef.current = 0;
     }
@@ -77,12 +77,12 @@ const HomePage = () => {
   const shuffleHeroExamples = () => {
     rowFitAttemptsRef.current = 0;
     setHeroExamples((current) => {
-      let next = getRandomExamples(insightExampleInputs, 3);
+      let next = getRandomExamples(heroShortExamples, 3);
       if (
         next.length === current.length &&
-        next.every((s, i) => s === current[i])
+        next.every((ex, i) => ex.short === current[i]?.short)
       ) {
-        next = getRandomExamples(insightExampleInputs, 3);
+        next = getRandomExamples(heroShortExamples, 3);
       }
       return next;
     });
@@ -115,9 +115,9 @@ const HomePage = () => {
   };
 
   const pickRandomExample = () => {
-    const pool = insightExampleInputs.filter((s) => s !== heroInput);
+    const pool = heroShortExamples.filter((ex) => ex.long !== heroInput);
     const next = pool[Math.floor(Math.random() * pool.length)];
-    setHeroInput(next);
+    if (next) setHeroInput(next.long);
   };
 
   const handleChange = (e) => {
@@ -197,12 +197,13 @@ const HomePage = () => {
           <div className="home-hero__chips" ref={chipsRef}>
             {heroExamples.map((ex) => (
               <button
-                key={ex}
+                key={ex.short}
                 type="button"
                 className="home-hero__chip"
-                onClick={() => setHeroInput(ex)}
+                onClick={() => setHeroInput(ex.long)}
+                title={ex.long}
               >
-                {ex}
+                {ex.short}
               </button>
             ))}
           </div>
@@ -288,7 +289,7 @@ const HomePage = () => {
             form, not weeks later.
           </p>
           <p className="home-about__links">
-            <Link to="/support">Read the v1 documentation</Link>
+            <Link to="/support">Read documentation</Link>
             {" · "}
             <a href={paperUrl} target="_blank" rel="noreferrer">
               Read the paper

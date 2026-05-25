@@ -88,7 +88,18 @@
     font-size: 15px;
     line-height: 1.5;
     color: var(--text);
-    background: transparent;
+    background-color: transparent;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(1.5em - 1px),
+      var(--border) calc(1.5em - 1px),
+      var(--border) 1.5em
+    );
+    background-size: 100% 1.5em;
+    background-position: 0 var(--s-4);
+    background-repeat: repeat-y;
+    background-attachment: local;
     border: none;
     resize: vertical;
     outline: none;
@@ -156,6 +167,7 @@
     border: 1px solid var(--border);
     border-radius: var(--r-full);
     box-shadow: var(--shadow-sm);
+    white-space: nowrap;
     cursor: pointer;
     transition: border-color var(--dur-fast) var(--ease-out),
       color var(--dur-fast) var(--ease-out);

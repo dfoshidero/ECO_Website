@@ -21,18 +21,103 @@ export const homeExamples = [
   },
 ];
 
-export const insightExampleInputs = [
-  "An office building with glulam beams",
-  "A triple-glazed curtain wall high-rise",
-  "A two-storey precast concrete store",
-  "A masonry residential complex with RCC substructure",
-  "A steel framed warehouse with an asphalt roof",
-  "A school with softwood frames and a sloped roof",
-  "A library with a green roof and SIPs panels",
-  "A clay block and concrete community center",
-  "A retail store with masonry bricks and ceramic tiles",
-  "A museum with glass panes and steel supports",
+export const insightExamples = [
+  {
+    title: "Suburban housing",
+    brief:
+      "A two-storey semi-detached house with a timber frame, brick cladding and a pitched tile roof.",
+  },
+  {
+    title: "Mid-rise office",
+    brief:
+      "A six-storey office with a reinforced concrete frame, curtain-wall glazing and a flat roof.",
+  },
+  {
+    title: "High-rise residential",
+    brief:
+      "A fifteen-storey apartment block with a concrete core, precast facade panels and triple-glazed windows.",
+  },
+  {
+    title: "Modular school",
+    brief:
+      "A single-storey primary school with cross-laminated timber walls, SIP roof panels and a green roof.",
+  },
+  {
+    title: "Warehouse / logistics",
+    brief:
+      "A steel-portal-frame distribution warehouse with profiled-metal cladding and an asphalt-membrane roof.",
+  },
+  {
+    title: "Cultural / civic",
+    brief:
+      "A museum with an exposed glulam roof structure, masonry walls and a large glazed entrance facade.",
+  },
+  {
+    title: "Vernacular dwelling",
+    brief:
+      "A single-storey rammed-earth house with thick masonry walls, timber joists and a clay-tile roof.",
+  },
+  {
+    title: "Retail store",
+    brief:
+      "A two-storey retail store with masonry brick walls, ceramic tile flooring and a steel-framed roof.",
+  },
+  {
+    title: "Community centre",
+    brief:
+      "A clay block and concrete community centre with a sloped roof, softwood frames and natural ventilation.",
+  },
+  {
+    title: "High-rise curtain wall",
+    brief:
+      "A triple-glazed curtain wall high-rise with pile foundations, steel supports and a reinforced concrete core.",
+  },
 ];
+
+export const heroShortExamples = [
+  {
+    short: "Timber-framed semi with a tiled roof.",
+    long: "A two-storey semi-detached house with a timber frame, brick cladding and a pitched clay-tile roof.",
+  },
+  {
+    short: "Steel-frame warehouse, metal cladding.",
+    long: "A single-storey steel-portal-frame distribution warehouse with profiled-metal cladding and an asphalt-membrane roof.",
+  },
+  {
+    short: "Concrete-frame office, curtain wall.",
+    long: "A six-storey office with a reinforced concrete frame, curtain-wall glazing and a flat roof.",
+  },
+  {
+    short: "CLT primary school, green roof.",
+    long: "A single-storey primary school with cross-laminated timber walls, SIP roof panels and a green roof.",
+  },
+  {
+    short: "Brick terrace with timber joists.",
+    long: "A three-storey brick terrace with masonry party walls, timber joist floors and a slate-tile pitched roof.",
+  },
+  {
+    short: "Glulam museum, masonry walls.",
+    long: "A museum with an exposed glulam roof structure, masonry walls and a large glazed entrance facade.",
+  },
+  {
+    short: "Rammed-earth house, clay-tile roof.",
+    long: "A single-storey rammed-earth house with thick masonry walls, timber joists and a clay-tile roof.",
+  },
+  {
+    short: "Modular steel pods, SIP panels.",
+    long: "A prefabricated modular building with steel framing, SIP wall and roof panels and quick on-site assembly.",
+  },
+  {
+    short: "High-rise core with precast facade.",
+    long: "A fifteen-storey apartment block with a reinforced concrete core, precast facade panels and triple-glazed windows.",
+  },
+  {
+    short: "Two-storey retail, masonry walls.",
+    long: "A two-storey retail store with masonry brick walls, ceramic tile flooring and a steel-framed roof.",
+  },
+];
+
+export const insightExampleInputs = insightExamples.map((example) => example.brief);
 
 export const insightPlaceholders = [
   "Describe your building — materials, structure, scale…",

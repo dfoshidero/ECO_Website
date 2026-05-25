@@ -28,8 +28,8 @@ export const createSessionItem = ({
   id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
   timestamp: Date.now(),
   snippet:
-    description.length > 80
-      ? `${description.slice(0, 80)}…`
+    description.length > 160
+      ? `${description.slice(0, 160)}…`
       : description,
   description,
   prediction,
