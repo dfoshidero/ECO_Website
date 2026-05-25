@@ -226,9 +226,6 @@ const HomePage = () => {
           <FaRandom /> Try an example
         </button>
 
-        <p className="home-hero__secondary">
-          <Link to="/support">Read the project documentation</Link>
-        </p>
       </section>
 
       <section className="home-stats">
