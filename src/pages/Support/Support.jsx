@@ -1,31 +1,55 @@
-import React, { useState } from "react";
-import { currentTrack, docsTracks } from "../../data/docs";
+import React, { useMemo, useState } from "react";
+import {
+  currentPreset,
+  ecoGenerations,
+  formatStageLabel,
+  getGenerationStatus,
+  getPresetForGeneration,
+} from "../../data/docs";
 import "./SupportPage.scss";
 
 const SupportPage = () => {
-  const [activeTrackId, setActiveTrackId] = useState(currentTrack.id);
+  const [activeGeneration, setActiveGeneration] = useState(currentPreset.generation);
+  const [activeProfile, setActiveProfile] = useState("standard");
   const [docsView, setDocsView] = useState("overview");
 
-  const track =
-    docsTracks.find((t) => t.id === activeTrackId) ?? currentTrack;
+  const activePreset = useMemo(() => {
+    if (activeGeneration === 2) {
+      return getPresetForGeneration(2, "standard");
+    }
+    return getPresetForGeneration(activeGeneration, activeProfile);
+  }, [activeGeneration, activeProfile]);
 
-  const isComingSoon = track.status === "comingSoon";
-  const changelog = track.changelog ?? [];
-  const showChangelogToggle = !isComingSoon && changelog.length > 0;
+  const isComingSoon = activePreset.status === "comingSoon";
+  const changelog = activePreset.changelog ?? [];
+  const showChangelogToggle =
+    activePreset.status === "current" && changelog.length > 0;
   const showOverview = docsView === "overview" && !isComingSoon;
   const showChangelog = docsView === "changelog" && showChangelogToggle;
+  const showProfileToggle = activeGeneration === 1;
 
-  const handleTrackChange = (trackId) => {
-    setActiveTrackId(trackId);
-    const next = docsTracks.find((t) => t.id === trackId);
-    if (next?.status === "comingSoon") {
+  const handleGenerationChange = (generation) => {
+    setActiveGeneration(generation);
+    if (generation === 2) {
+      setActiveProfile("standard");
       setDocsView("overview");
+    } else {
+      setActiveProfile("standard");
     }
   };
 
-  const stageLabel = track.currentPatch
-    ? `${track.label} ${track.currentPatch} · Early access`
-    : `${track.label} · Coming soon`;
+  const handleProfileChange = (profile) => {
+    setActiveProfile(profile);
+    setDocsView("overview");
+  };
+
+  const goToEco1Standard = () => {
+    setActiveGeneration(1);
+    setActiveProfile("standard");
+    setDocsView("overview");
+  };
+
+  const stageLabel = formatStageLabel(activePreset);
 
   return (
     <div className="docs">
@@ -51,30 +75,65 @@ const SupportPage = () => {
         </dl>
       </header>
 
-      <div className="docs__version-tabs" role="tablist" aria-label="Version">
-        {docsTracks.map((t) => (
+      <div className="docs__version-tabs" role="tablist" aria-label="Generation">
+        {ecoGenerations.map((gen) => {
+          const status = getGenerationStatus(gen);
+          return (
+            <button
+              key={gen}
+              type="button"
+              role="tab"
+              aria-selected={activeGeneration === gen}
+              className={`docs__version-tab ${
+                activeGeneration === gen ? "active" : ""
+              }`}
+              onClick={() => handleGenerationChange(gen)}
+            >
+              ECO {gen}
+              {status === "current" && (
+                <span className="docs__version-badge">Current</span>
+              )}
+              {status === "comingSoon" && (
+                <span className="docs__version-badge docs__version-badge--muted">
+                  Coming soon
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {showProfileToggle && (
+        <div
+          className="docs__view-toggle docs__profile-toggle"
+          role="tablist"
+          aria-label="Extraction profile"
+        >
           <button
-            key={t.id}
             type="button"
             role="tab"
-            aria-selected={activeTrackId === t.id}
-            className={`docs__version-tab ${
-              activeTrackId === t.id ? "active" : ""
+            aria-selected={activeProfile === "standard"}
+            className={`docs__view-tab ${
+              activeProfile === "standard" ? "active" : ""
             }`}
-            onClick={() => handleTrackChange(t.id)}
+            onClick={() => handleProfileChange("standard")}
           >
-            {t.label}
-            {t.status === "current" && (
-              <span className="docs__version-badge">Current</span>
-            )}
-            {t.status === "comingSoon" && (
-              <span className="docs__version-badge docs__version-badge--muted">
-                Coming soon
-              </span>
-            )}
+            Standard
           </button>
-        ))}
-      </div>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeProfile === "strict"}
+            className={`docs__view-tab docs__view-tab--soon ${
+              activeProfile === "strict" ? "active" : ""
+            }`}
+            onClick={() => handleProfileChange("strict")}
+          >
+            Strict
+            <span className="docs__view-tab-hint">Coming soon</span>
+          </button>
+        </div>
+      )}
 
       {showChangelogToggle && (
         <div
@@ -108,48 +167,27 @@ const SupportPage = () => {
       )}
 
       <div className="docs__version-intro">
-        <p>{track.summary}</p>
-        {track.releasedAt && (
-          <span className="docs__released">Released {track.releasedAt}</span>
-        )}
-        {track.variants && track.variants.length > 0 && showOverview && (
-          <div className="docs__variants" aria-label="Model variants">
-            {track.variants.map((variant) => (
-              <span
-                key={variant.id}
-                className={`docs__variant-chip ${
-                  variant.status === "comingSoon"
-                    ? "docs__variant-chip--soon"
-                    : ""
-                }`}
-                title={variant.description}
-              >
-                {variant.label}
-                {variant.status === "current" && (
-                  <span className="docs__variant-chip-badge">Active</span>
-                )}
-                {variant.status === "comingSoon" && (
-                  <span className="docs__variant-chip-badge docs__variant-chip-badge--muted">
-                    Coming soon
-                  </span>
-                )}
-              </span>
-            ))}
-          </div>
+        <p>{activePreset.summary}</p>
+        {activePreset.releasedAt && (
+          <span className="docs__released">
+            Released {activePreset.releasedAt}
+          </span>
         )}
       </div>
 
       {isComingSoon && (
         <div className="docs__coming-soon">
-          <p className="docs__coming-soon-label">Planned for {track.label}</p>
-          <div className="docs__section-body">{track.preview}</div>
+          <p className="docs__coming-soon-label">
+            Planned for {activePreset.label}
+          </p>
+          <div className="docs__section-body">{activePreset.preview}</div>
           <p className="docs__coming-soon-back">
             <button
               type="button"
               className="docs__coming-soon-link"
-              onClick={() => handleTrackChange(currentTrack.id)}
+              onClick={goToEco1Standard}
             >
-              ← Back to {currentTrack.label} documentation
+              ← Back to ECO 1 documentation
             </button>
           </p>
         </div>
@@ -158,7 +196,7 @@ const SupportPage = () => {
       {showOverview && (
         <div className="docs__layout">
           <nav className="docs__nav" aria-label="Section navigation">
-            {track.sections.map(({ id, title }) => (
+            {activePreset.sections.map(({ id, title }) => (
               <a key={id} href={`#${id}`} className="docs__nav-link">
                 {title}
               </a>
@@ -166,7 +204,7 @@ const SupportPage = () => {
           </nav>
 
           <div className="docs__content">
-            {track.sections.map(({ id, title, content }) => (
+            {activePreset.sections.map(({ id, title, content }) => (
               <section key={id} id={id} className="docs__section">
                 <h2>{title}</h2>
                 <div className="docs__section-body">{content}</div>
@@ -178,12 +216,16 @@ const SupportPage = () => {
 
       {showChangelog && (
         <div className="docs__changelog-panel">
-          <h2 className="docs__changelog-title">What&apos;s new in {track.label}</h2>
+          <h2 className="docs__changelog-title">
+            What&apos;s new in ECO {activePreset.generation}
+          </h2>
           <ul className="docs-changelog">
             {changelog.map((entry) => (
               <li key={entry.version} className="docs-changelog__entry">
                 <div className="docs-changelog__header">
-                  <span className="docs-changelog__version">{entry.version}</span>
+                  <span className="docs-changelog__version">
+                    {entry.version}
+                  </span>
                   <time className="docs-changelog__date">{entry.date}</time>
                 </div>
                 <ul className="docs-changelog__notes">
